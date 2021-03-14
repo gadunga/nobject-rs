@@ -1,0 +1,9 @@
+max_width = 100
+wrap_comments = true
+newline_style = "Unix"
+use_try_shorthand = true
+
+imports_layout = "Vertical"
+imports_granularity="Crate"
+struct_field_align_threshold = 20
+match_block_trailing_comma = true
