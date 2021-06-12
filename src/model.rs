@@ -9,7 +9,14 @@ use derive_more::{
     Into,
 };
 
-use crate::tokenizer::Token;
+use crate::{
+    get_token_float,
+    get_token_int,
+    get_token_string,
+    token_match,
+    tokenizer::Token,
+};
+
 use nom::{
     branch::alt,
     combinator::{
@@ -28,31 +35,6 @@ use nom::{
     IResult,
 };
 use thiserror::Error;
-
-macro_rules! token_match {
-    ($($token:tt)*) => {{
-        fn inner() -> impl Fn(&[Token]) -> IResult<&[Token], Token> {
-            move |input: &[Token]| -> IResult<&[Token], Token> {
-                if input.is_empty() {
-                    Err(nom::Err::Error(nom::error::Error::new(
-                        input,
-                        nom::error::ErrorKind::Eof,
-                    )))
-                } else if matches!(input[0], $($token)*) {
-                    let token = input[0].clone();
-                    let (_, remainder) = input.split_at(1);
-                    Ok((remainder, token))
-                } else {
-                    Err(nom::Err::Error(nom::error::Error::new(
-                        input,
-                        nom::error::ErrorKind::Tag,
-                    )))
-                }
-            }
-        }
-        inner()
-    }};
-}
 
 #[derive(Error, Debug)]
 pub enum ModelError {
@@ -121,7 +103,7 @@ pub struct Point {
     pub elements: Vec<i32>,
 }
 
-#[derive(Clone, Constructor, Debug, From, Into)]
+#[derive(Clone, Debug, From, Into)]
 pub struct Model {
     pub vertices:            Vec<Vertex>,
     pub normals:             Vec<Normal>,
@@ -188,12 +170,12 @@ enum ModelElement {
 pub(crate) fn parse(input: &[Token]) -> Result<Model, ModelError> {
     match fold_many0(
         alt((
-            map(parse_vertex, |v| ModelElement::Vertex(v)),
-            map(parse_vertex_normal, |n| ModelElement::Normal(n)),
-            map(parse_vertex_texture, |t| ModelElement::Texture(t)),
-            map(parse_face, |f| ModelElement::Face(f)),
-            map(parse_line, |l| ModelElement::Line(l)),
-            map(parse_point, |p| ModelElement::Point(p)),
+            map(parse_vertex, ModelElement::Vertex),
+            map(parse_vertex_normal, ModelElement::Normal),
+            map(parse_vertex_texture, ModelElement::Texture),
+            map(parse_face, ModelElement::Face),
+            map(parse_line, ModelElement::Line),
+            map(parse_point, ModelElement::Point),
             parse_mat_lib,
             parse_material,
             parse_obj_name,
@@ -217,19 +199,19 @@ pub(crate) fn parse(input: &[Token]) -> Result<Model, ModelError> {
                 ModelElement::Face(mut f) => {
                     f.smoothing_group = model.current_smoothing_group;
                     for g in &model.current_group {
-                        let set = model.faces.entry(g.clone()).or_insert(Vec::new());
+                        let set = model.faces.entry(g.clone()).or_insert_with(Vec::new);
                         set.push(f.clone());
                     }
                 },
                 ModelElement::Line(l) => {
                     for g in &model.current_group {
-                        let set = model.lines.entry(g.clone()).or_insert(Vec::new());
+                        let set = model.lines.entry(g.clone()).or_insert_with(Vec::new);
                         set.push(l.clone());
                     }
                 },
                 ModelElement::Point(p) => {
                     for g in &model.current_group {
-                        let set = model.points.entry(g.clone()).or_insert(Vec::new());
+                        let set = model.points.entry(g.clone()).or_insert_with(Vec::new);
                         set.push(p.clone());
                     }
                 },
@@ -289,11 +271,35 @@ fn parse_vertex(input: &[Token]) -> IResult<&[Token], Vertex> {
         ),
         |(x, y, z, w)| {
             let (x, y, z) = (
-                get_token_float(&x),
-                get_token_float(&y),
-                get_token_float(&z),
+                match get_token_float(&x) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        log::error!("{}", e);
+                        Default::default()
+                    },
+                },
+                match get_token_float(&y) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        log::error!("{}", e);
+                        Default::default()
+                    },
+                },
+                match get_token_float(&z) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        log::error!("{}", e);
+                        Default::default()
+                    },
+                },
             );
-            let w = w.map(|val| get_token_float(&val));
+            let w = w.map(|val| match get_token_float(&val) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("{}", e);
+                    Default::default()
+                },
+            });
             (x, y, z, w).into()
         },
     )(input)
@@ -310,12 +316,30 @@ fn parse_vertex_normal(input: &[Token]) -> IResult<&[Token], Normal> {
             )),
         ),
         |(x, y, z)| {
-            (
-                get_token_float(&x),
-                get_token_float(&y),
-                get_token_float(&z),
-            )
-                .into()
+            let (x, y, z) = (
+                match get_token_float(&x) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        log::error!("{}", e);
+                        Default::default()
+                    },
+                },
+                match get_token_float(&y) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        log::error!("{}", e);
+                        Default::default()
+                    },
+                },
+                match get_token_float(&z) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        log::error!("{}", e);
+                        Default::default()
+                    },
+                },
+            );
+            (x, y, z).into()
         },
     )(input)
 }
@@ -331,9 +355,27 @@ fn parse_vertex_texture(input: &[Token]) -> IResult<&[Token], Texture> {
             )),
         ),
         |(u, v, w)| {
-            let u = get_token_float(&u);
-            let v = v.map(|val| get_token_float(&val));
-            let w = w.map(|val| get_token_float(&val));
+            let u = match get_token_float(&u) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("{}", e);
+                    Default::default()
+                },
+            };
+            let v = v.map(|val| match get_token_float(&val) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("{}", e);
+                    Default::default()
+                },
+            });
+            let w = w.map(|val| match get_token_float(&val) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("{}", e);
+                    Default::default()
+                },
+            });
             (u, v, w).into()
         },
     )(input)
@@ -352,9 +394,27 @@ fn parse_face(input: &[Token]) -> IResult<&[Token], Face> {
                     opt(token_match!(Token::Int(_))),
                 )),
                 |(v, _s1, t, _s2, n)| {
-                    let v = get_token_int(&v);
-                    let t = t.map(|tex| get_token_int(&tex));
-                    let n = n.map(|norm| get_token_int(&norm));
+                    let v = match get_token_int(&v) {
+                        Ok(s) => s,
+                        Err(e) => {
+                            log::error!("{}", e);
+                            Default::default()
+                        },
+                    };
+                    let t = t.map(|tex| match get_token_int(&tex) {
+                        Ok(s) => s,
+                        Err(e) => {
+                            log::error!("{}", e);
+                            Default::default()
+                        },
+                    });
+                    let n = n.map(|norm| match get_token_int(&norm) {
+                        Ok(s) => s,
+                        Err(e) => {
+                            log::error!("{}", e);
+                            Default::default()
+                        },
+                    });
                     (v, t, n).into()
                 },
             ),
@@ -378,8 +438,20 @@ fn parse_line(input: &[Token]) -> IResult<&[Token], Line> {
                     opt(token_match!(Token::Int(_))),
                 )),
                 |(v, _s1, t)| {
-                    let v = get_token_int(&v);
-                    let t = t.map(|tex| get_token_int(&tex));
+                    let v = match get_token_int(&v) {
+                        Ok(s) => s,
+                        Err(e) => {
+                            log::error!("{}", e);
+                            Default::default()
+                        },
+                    };
+                    let t = t.map(|tex| match get_token_int(&tex) {
+                        Ok(s) => s,
+                        Err(e) => {
+                            log::error!("{}", e);
+                            Default::default()
+                        },
+                    });
                     (v, t).into()
                 },
             ),
@@ -396,7 +468,13 @@ fn parse_point(input: &[Token]) -> IResult<&[Token], Point> {
     preceded(
         token_match!(Token::Point),
         fold_many1(
-            map(token_match!(Token::Int(_)), |v| get_token_int(&v)),
+            map(token_match!(Token::Int(_)), |v| match get_token_int(&v) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("{}", e);
+                    Default::default()
+                },
+            }),
             Point::default(),
             |mut f: Point, item: i32| {
                 f.elements.push(item);
@@ -410,15 +488,18 @@ fn parse_group(input: &[Token]) -> IResult<&[Token], ModelElement> {
     map(
         preceded(
             token_match!(Token::Group),
-            many1(map(token_match!(Token::String(_)), |s| {
-                if let Token::String(s) = s {
-                    s
-                } else {
-                    panic!();
-                }
-            })),
+            many1(map(
+                token_match!(Token::String(_)),
+                |s| match get_token_string(&s) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        log::error!("{}", e);
+                        Default::default()
+                    },
+                },
+            )),
         ),
-        |v| ModelElement::Group(v),
+        ModelElement::Group,
     )(input)
 }
 
@@ -426,15 +507,18 @@ fn parse_mat_lib(input: &[Token]) -> IResult<&[Token], ModelElement> {
     map(
         preceded(
             token_match!(Token::MaterialLib),
-            many1(map(token_match!(Token::String(_)), |s| {
-                if let Token::String(s) = s {
-                    s
-                } else {
-                    panic!();
-                }
-            })),
+            many1(map(
+                token_match!(Token::String(_)),
+                |s| match get_token_string(&s) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        log::error!("{}", e);
+                        Default::default()
+                    },
+                },
+            )),
         ),
-        |v| ModelElement::MaterialLib(v),
+        ModelElement::MaterialLib,
     )(input)
 }
 
@@ -604,7 +688,7 @@ fn parse_texture_lib(input: &[Token]) -> IResult<&[Token], ModelElement> {
                 }
             })),
         ),
-        |v| ModelElement::TextureLib(v),
+        ModelElement::TextureLib,
     )(input)
 }
 
@@ -622,20 +706,4 @@ fn parse_texture_map(input: &[Token]) -> IResult<&[Token], ModelElement> {
             }
         },
     )(input)
-}
-
-fn get_token_float(token: &Token) -> f32 {
-    if let Token::Float(f) = token {
-        *f
-    } else {
-        panic!()
-    }
-}
-
-fn get_token_int(token: &Token) -> i32 {
-    if let Token::Int(i) = token {
-        *i
-    } else {
-        panic!()
-    }
 }

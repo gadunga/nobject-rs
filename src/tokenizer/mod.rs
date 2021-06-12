@@ -398,7 +398,7 @@ pub enum Token {
     OptionBumpMultiplier,
 
     /// increases the sharpness, or clarity, of mip-mapped
-    /// texture files
+    /// texture files. This does not appear to be used anywhere.
     /// -boost value
     OptionBoost,
 

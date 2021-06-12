@@ -8,25 +8,16 @@ use nom::{
         tag_no_case,
     },
     character::complete::{
-        digit1,
         line_ending,
         multispace0,
         multispace1,
     },
-    combinator::{
-        map,
-        opt,
-    },
-    multi::{
-        fold_many0,
-        fold_many1,
-    },
+    combinator::map,
+    multi::fold_many0,
     sequence::{
         delimited,
         preceded,
-        tuple,
     },
-    IResult,
 };
 
 use crate::keyword_rule;

@@ -55,7 +55,6 @@ fn parse_turbulence_2() {
     assert_eq!(tokens[2], Token::Float(1.3));
 }
 
-
 #[test]
 fn parse_turbulence_3() {
     let vert = "-t 1.2 1.3 1.4";
@@ -91,7 +90,6 @@ fn parse_scale_2() {
     assert_eq!(tokens[1], Token::Float(1.2));
     assert_eq!(tokens[2], Token::Float(1.3));
 }
-
 
 #[test]
 fn parse_scale_3() {
@@ -233,7 +231,7 @@ fn parse_blendu() {
 
 #[test]
 fn parse_refl_1() {
-    let vert = "refl -type sphere -mm 0 1 clouds.mpc";
+    let vert = "refl -type sphere -mm 0.2 1.2 clouds.mpc";
     let res = parse_mtl(vert);
     assert!(res.is_ok());
     let tokens = res.unwrap();
@@ -243,7 +241,21 @@ fn parse_refl_1() {
     assert_eq!(tokens[1], Token::ReflectionType);
     assert_eq!(tokens[2], Token::String("sphere".into()));
     assert_eq!(tokens[3], Token::OptionRange);
-    assert_eq!(tokens[4], Token::Int(0));
-    assert_eq!(tokens[5], Token::Int(1));
+    assert_eq!(tokens[4], Token::Float(0.2));
+    assert_eq!(tokens[5], Token::Float(1.2));
     assert_eq!(tokens[6], Token::String("clouds.mpc".into()));
+}
+
+#[test]
+fn parse_tf_spectral() {
+    let vert = "Tf spectral file.rfl 1.0";
+    let res = parse_mtl(vert);
+    assert!(res.is_ok());
+    let tokens = res.unwrap();
+    dbg!(&tokens);
+    assert_eq!(tokens.len(), 4);
+    assert_eq!(tokens[0], Token::TransmissionFactor);
+    assert_eq!(tokens[1], Token::Spectral);
+    assert_eq!(tokens[2], Token::String("file.rfl".into()));
+    assert_eq!(tokens[3], Token::Float(1.0));
 }

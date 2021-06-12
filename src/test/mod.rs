@@ -1,2 +1,2 @@
-mod obj;
 mod mtl;
+mod obj;
