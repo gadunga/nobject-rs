@@ -1,6 +1,17 @@
-use crate::tokenizer::{
-    parse_mtl,
-    Token,
+use crate::{
+    material::{
+        BumpMap,
+        ColorCorrectedMap,
+        ColorType,
+        DisolveType,
+        Material,
+        NonColorCorrectedMap,
+        ReflectionMap,
+    },
+    tokenizer::{
+        parse_mtl,
+        Token,
+    },
 };
 
 #[test]
@@ -259,3 +270,214 @@ fn parse_tf_spectral() {
     assert_eq!(tokens[2], Token::String("file.rfl".into()));
     assert_eq!(tokens[3], Token::Float(1.0));
 }
+
+macro_rules! parse_material_test {
+    ($name:ident, $val:expr, $exp:expr) => {
+        #[test]
+        fn $name() {
+            let res = crate::load_mtl(&$val).unwrap();
+            assert_eq!(res.len(), 1);
+            let mat = res.first().unwrap();
+            assert_eq!(mat, &$exp);
+        }
+    };
+}
+
+parse_material_test!(
+    neon_green,
+    "newmtl neon_green
+Kd 0.0000 1.0000 0.0000
+illum 0",
+    Material {
+        name: "neon_green".to_string(),
+        diffuse: Some(ColorType::Rgb(0.0, 1.0, 0.0)),
+        illumination_mode: Some(0),
+        ..Default::default()
+    }
+);
+
+parse_material_test!(
+    frosted_window,
+    "newmtl frost_wind
+    Ka 0.2 0.2 0.2
+    Kd 0.6 0.6 0.6
+    Ks 0.1 0.1 0.1
+    d 1
+    Ns 200
+    illum 2
+    map_d -mm 0.200 0.800 window.mps",
+    Material {
+        name: "frost_wind".to_string(),
+        ambient: Some(ColorType::Rgb(0.2, 0.2, 0.2)),
+        diffuse: Some(ColorType::Rgb(0.6, 0.6, 0.6)),
+        specular: Some(ColorType::Rgb(0.1, 0.1, 0.1)),
+        disolve: Some(DisolveType::Alpha(1.0)),
+        specular_exponent: Some(200.0),
+        illumination_mode: Some(2),
+        disolve_map: Some(NonColorCorrectedMap {
+            texture_range: Some((0.2, 0.8)),
+            file_name: "window.mps".into(),
+            ..Default::default()
+        }),
+        ..Default::default()
+    }
+);
+
+parse_material_test!(
+    flat_green_test,
+    "newmtl flat_green
+ Ka 0.0000 1.0000 0.0000
+ Kd 0.0000 1.0000 0.0000
+ illum 1",
+    Material {
+        name: "flat_green".into(),
+        ambient: Some(ColorType::Rgb(0.0, 1.0, 0.0)),
+        diffuse: Some(ColorType::Rgb(0.0, 1.0, 0.0)),
+        illumination_mode: Some(1),
+        ..Default::default()
+    }
+);
+
+parse_material_test!(
+    pine_wood_test,
+    "newmtl pine_wood
+ Ka spectral ident.rfl 1
+ Kd spectral ident.rfl 1
+ illum 1
+ map_Ka pine.mpc
+ map_Kd pine.mpc",
+    Material {
+        name: "pine_wood".into(),
+        ambient: Some(ColorType::Spectral("ident.rfl".into(), 1.0)),
+        diffuse: Some(ColorType::Spectral("ident.rfl".into(), 1.0)),
+        illumination_mode: Some(1),
+        texture_map_ambient: Some(ColorCorrectedMap {
+            file_name: "pine.mpc".into(),
+            ..Default::default()
+        }),
+        texture_map_diffuse: Some(ColorCorrectedMap {
+            file_name: "pine.mpc".into(),
+            ..Default::default()
+        }),
+        ..Default::default()
+    }
+);
+
+parse_material_test!(
+    tin_test,
+    "newmtl tin
+ Ka spectral tin.rfl
+ Kd spectral tin.rfl
+ Ks spectral tin.rfl
+ Ns 200
+ illum 3",
+    Material {
+        name: "tin".into(),
+        ambient: Some(ColorType::Spectral("tin.rfl".into(), 1.0)),
+        diffuse: Some(ColorType::Spectral("tin.rfl".into(), 1.0)),
+        specular: Some(ColorType::Spectral("tin.rfl".into(), 1.0)),
+        illumination_mode: Some(3),
+        specular_exponent: Some(200.0),
+        ..Default::default()
+    }
+);
+
+parse_material_test!(
+    bump_leath_test,
+    "newmtl bumpy_leath
+ Ka spectral ident.rfl 1
+ Kd spectral ident.rfl 1
+ Ks spectral ident.rfl 1
+ illum 2
+ map_Ka brown.mpc
+ map_Kd brown.mpc
+ map_Ks brown.mpc
+ bump -bm 2.000 leath.mpb",
+    Material {
+        name: "bumpy_leath".into(),
+        ambient: Some(ColorType::Spectral("ident.rfl".into(), 1.0)),
+        diffuse: Some(ColorType::Spectral("ident.rfl".into(), 1.0)),
+        specular: Some(ColorType::Spectral("ident.rfl".into(), 1.0)),
+        illumination_mode: Some(2),
+        texture_map_ambient: Some(ColorCorrectedMap {
+            file_name: "brown.mpc".into(),
+            ..Default::default()
+        }),
+        texture_map_diffuse: Some(ColorCorrectedMap {
+            file_name: "brown.mpc".into(),
+            ..Default::default()
+        }),
+        texture_map_specular: Some(ColorCorrectedMap {
+            file_name: "brown.mpc".into(),
+            ..Default::default()
+        }),
+        bump_map: Some(BumpMap {
+            bump_multiplier: Some(2.0),
+            map_settings:    Some(NonColorCorrectedMap {
+                file_name: "leath.mpb".into(),
+                ..Default::default()
+            }),
+        }),
+        ..Default::default()
+    }
+);
+
+parse_material_test!(
+    logo_test,
+    "newmtl logo
+ Ka spectral ident.rfl 1
+ Kd spectral ident.rfl 1
+ Ks spectral ident.rfl 1
+ illum 2
+ map_Ka -s 1.200 1.200 0.000 logo.mpc
+ map_Kd -s 1.200 1.200 0.000 logo.mpc
+ map_Ks -s 1.200 1.200 0.000 logo.mpc",
+    Material {
+        name: "logo".into(),
+        ambient: Some(ColorType::Spectral("ident.rfl".into(), 1.0)),
+        diffuse: Some(ColorType::Spectral("ident.rfl".into(), 1.0)),
+        specular: Some(ColorType::Spectral("ident.rfl".into(), 1.0)),
+        illumination_mode: Some(2),
+        texture_map_ambient: Some(ColorCorrectedMap {
+            file_name: "logo.mpc".into(),
+            scale: Some((1.2, Some(1.2), Some(0.0))),
+            ..Default::default()
+        }),
+        texture_map_diffuse: Some(ColorCorrectedMap {
+            file_name: "logo.mpc".into(),
+            scale: Some((1.2, Some(1.2), Some(0.0))),
+            ..Default::default()
+        }),
+        texture_map_specular: Some(ColorCorrectedMap {
+            file_name: "logo.mpc".into(),
+            scale: Some((1.2, Some(1.2), Some(0.0))),
+            ..Default::default()
+        }),
+        ..Default::default()
+    }
+);
+
+parse_material_test!(
+    reflection_material,
+    "newmtl reflection
+ ka 0 0 0
+ kd 0 0 0
+ ks .7 .7 .7
+ illum 1
+ refl -type sphere chrome.rla",
+    Material {
+        name: "reflection".into(),
+        ambient: Some(ColorType::Rgb(0.0, 0.0, 0.0)),
+        diffuse: Some(ColorType::Rgb(0.0, 0.0, 0.0)),
+        specular: Some(ColorType::Rgb(0.7, 0.7, 0.7)),
+        illumination_mode: Some(1),
+        reflection_map: Some(ReflectionMap {
+            reflection_type: "sphere".into(),
+            map_settings:    Some(ColorCorrectedMap {
+                file_name: "chrome.rla".into(),
+                ..Default::default()
+            }),
+        }),
+        ..Default::default()
+    }
+);

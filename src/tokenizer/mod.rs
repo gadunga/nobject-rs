@@ -15,7 +15,10 @@ use nom::{
         map,
         opt,
     },
-    multi::fold_many1,
+    multi::{
+        fold_many0,
+        fold_many1,
+    },
     sequence::tuple,
     IResult,
 };
@@ -483,7 +486,7 @@ pub(self) fn parse_float(input: &str) -> IResult<&str, Token> {
             alt((
                 map(
                     tuple((
-                        fold_many1(digit1, Vec::new(), |mut acc: Vec<_>, item| {
+                        fold_many0(digit1, Vec::new(), |mut acc: Vec<_>, item| {
                             acc.push(item);
                             acc
                         }),

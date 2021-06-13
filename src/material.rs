@@ -23,14 +23,14 @@ use nom::{
 };
 use thiserror::Error;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ColorType {
     Rgb(f32, f32, f32),
     Spectral(String, f32),
     CieXyz(f32, f32, f32),
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DisolveType {
     Alpha(f32),
     Halo(f32),
@@ -53,7 +53,7 @@ enum OptionElement {
     ReflectionType(String),
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct ColorCorrectedMap {
     pub file_name:     String,
     pub blend_u:       Option<bool>,
@@ -108,7 +108,7 @@ impl ColorCorrectedMap {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct NonColorCorrectedMap {
     pub file_name:     String,
     pub blend_u:       Option<bool>,
@@ -161,7 +161,7 @@ impl NonColorCorrectedMap {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct BumpMap {
     pub bump_multiplier: Option<f32>,
     pub map_settings:    Option<NonColorCorrectedMap>,
@@ -184,7 +184,7 @@ impl BumpMap {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct ReflectionMap {
     pub reflection_type: String,
     pub map_settings:    Option<ColorCorrectedMap>,
@@ -207,7 +207,7 @@ impl ReflectionMap {
     }
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, PartialEq)]
 pub struct Material {
     pub name:                 String,
     pub ambient:              Option<ColorType>,
@@ -337,6 +337,7 @@ enum MaterialElement {
 }
 
 pub(crate) fn parse(input: &[Token]) -> Result<Vec<Material>, MaterialError> {
+    dbg!(&input);
     let elements: Vec<MaterialElement> = match many1(alt((
         parse_new_material,
         parse_ambient,
@@ -366,6 +367,7 @@ pub(crate) fn parse(input: &[Token]) -> Result<Vec<Material>, MaterialError> {
     };
 
     let mut res = Vec::new();
+    dbg!(&elements);
     for e in elements {
         if let MaterialElement::Name(n) = e {
             res.push(Material::default());
@@ -406,7 +408,7 @@ fn parse_color_type(input: &[Token]) -> IResult<&[Token], ColorType> {
             tuple((
                 token_match!(Token::Spectral),
                 token_match!(Token::String(_)),
-                token_match!(Token::Float(_)),
+                opt(token_match!(Token::Float(_) | Token::Int(_))),
             )),
             |(_, file, factor)| {
                 let file_name = match get_token_string(&file) {
@@ -416,8 +418,8 @@ fn parse_color_type(input: &[Token]) -> IResult<&[Token], ColorType> {
                         Default::default()
                     },
                 };
-                let factor = match get_token_float(&factor) {
-                    Ok(s) => s,
+                let factor = match get_opt_token_float_opt(&factor) {
+                    Ok(s) => s.unwrap_or(1.0),
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
@@ -429,9 +431,9 @@ fn parse_color_type(input: &[Token]) -> IResult<&[Token], ColorType> {
         map(
             tuple((
                 token_match!(Token::Xyz),
-                token_match!(Token::Float(_)),
-                opt(token_match!(Token::Float(_))),
-                opt(token_match!(Token::Float(_))),
+                token_match!(Token::Float(_) | Token::Int(_)),
+                opt(token_match!(Token::Float(_) | Token::Int(_))),
+                opt(token_match!(Token::Float(_) | Token::Int(_))),
             )),
             |(_, x_token, y_token, z_token)| {
                 let x = match get_token_float(&x_token) {
@@ -467,9 +469,9 @@ fn parse_color_type(input: &[Token]) -> IResult<&[Token], ColorType> {
         ),
         map(
             tuple((
-                token_match!(Token::Float(_)),
-                token_match!(Token::Float(_)),
-                token_match!(Token::Float(_)),
+                token_match!(Token::Float(_) | Token::Int(_)),
+                token_match!(Token::Float(_) | Token::Int(_)),
+                token_match!(Token::Float(_) | Token::Int(_)),
             )),
             |(r, g, b)| {
                 let (r, g, b) = (
@@ -526,7 +528,7 @@ fn parse_specular(input: &[Token]) -> IResult<&[Token], MaterialElement> {
 fn parse_specular_exponent(input: &[Token]) -> IResult<&[Token], MaterialElement> {
     preceded(
         token_match!(Token::SpecularExponent),
-        map(token_match!(Token::Float(_)), |f| {
+        map(token_match!(Token::Float(_) | Token::Int(_)), |f| {
             let f = match get_token_float(&f) {
                 Ok(s) => s,
                 Err(e) => {
@@ -544,7 +546,10 @@ fn parse_disolve(input: &[Token]) -> IResult<&[Token], MaterialElement> {
         token_match!(Token::Disolved),
         alt((
             map(
-                preceded(token_match!(Token::Halo), token_match!(Token::Float(_))),
+                preceded(
+                    token_match!(Token::Halo),
+                    token_match!(Token::Float(_) | Token::Int(_)),
+                ),
                 |f| {
                     let f = match get_token_float(&f) {
                         Ok(s) => s,
@@ -556,7 +561,7 @@ fn parse_disolve(input: &[Token]) -> IResult<&[Token], MaterialElement> {
                     MaterialElement::Disolve(DisolveType::Halo(f))
                 },
             ),
-            map(token_match!(Token::Float(_)), |f| {
+            map(token_match!(Token::Float(_) | Token::Int(_)), |f| {
                 let f = match get_token_float(&f) {
                     Ok(s) => s,
                     Err(e) => {
