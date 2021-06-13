@@ -337,7 +337,6 @@ enum MaterialElement {
 }
 
 pub(crate) fn parse(input: &[Token]) -> Result<Vec<Material>, MaterialError> {
-    dbg!(&input);
     let elements: Vec<MaterialElement> = match many1(alt((
         parse_new_material,
         parse_ambient,

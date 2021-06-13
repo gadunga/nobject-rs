@@ -10,6 +10,7 @@ use derive_more::{
 };
 
 use crate::{
+    get_on_off_from_str,
     get_token_float,
     get_token_int,
     get_token_string,
@@ -42,7 +43,7 @@ pub enum ModelError {
     Parse(String),
 }
 
-#[derive(Clone, Constructor, Debug, Default, From, Into)]
+#[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Vertex {
     pub x: f32,
     pub y: f32,
@@ -50,21 +51,21 @@ pub struct Vertex {
     pub w: Option<f32>,
 }
 
-#[derive(Clone, Constructor, Debug, Default, From, Into)]
+#[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Normal {
     pub x: f32,
     pub y: f32,
     pub z: f32,
 }
 
-#[derive(Clone, Constructor, Debug, Default, From, Into)]
+#[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Texture {
     pub u: f32,
     pub v: Option<f32>,
     pub w: Option<f32>,
 }
 
-#[derive(Clone, Constructor, Debug, Default, From, Into)]
+#[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Group {
     pub material_name: String,
     pub bevel:         bool,
@@ -74,31 +75,31 @@ pub struct Group {
     pub texture_map:   Option<String>,
 }
 
-#[derive(Clone, Constructor, Debug, Default, From, Into)]
+#[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct FaceElement {
     pub vertex_index:  i32,
     pub texture_index: Option<i32>,
     pub normal_index:  Option<i32>,
 }
 
-#[derive(Clone, Constructor, Debug, Default, From, Into)]
+#[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Face {
     pub elements:        Vec<FaceElement>,
     pub smoothing_group: i32,
 }
 
-#[derive(Clone, Constructor, Debug, Default, From, Into)]
+#[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct LineElement {
     pub vertex_index:  i32,
     pub texture_index: Option<i32>,
 }
 
-#[derive(Clone, Constructor, Debug, Default, From, Into)]
+#[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Line {
     pub elements: Vec<LineElement>,
 }
 
-#[derive(Clone, Constructor, Debug, Default, From, Into)]
+#[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Point {
     pub elements: Vec<i32>,
 }
@@ -388,12 +389,16 @@ fn parse_face(input: &[Token]) -> IResult<&[Token], Face> {
             map(
                 tuple((
                     token_match!(Token::Int(_)),
-                    opt(token_match!(Token::Slash)),
-                    opt(token_match!(Token::Int(_))),
-                    opt(token_match!(Token::Slash)),
-                    opt(token_match!(Token::Int(_))),
+                    opt(preceded(
+                        token_match!(Token::Slash),
+                        opt(token_match!(Token::Int(_))),
+                    )),
+                    opt(preceded(
+                        token_match!(Token::Slash),
+                        opt(token_match!(Token::Int(_))),
+                    )),
                 )),
-                |(v, _s1, t, _s2, n)| {
+                |(v, t, n)| {
                     let v = match get_token_int(&v) {
                         Ok(s) => s,
                         Err(e) => {
@@ -401,20 +406,27 @@ fn parse_face(input: &[Token]) -> IResult<&[Token], Face> {
                             Default::default()
                         },
                     };
-                    let t = t.map(|tex| match get_token_int(&tex) {
-                        Ok(s) => s,
-                        Err(e) => {
-                            log::error!("{}", e);
-                            Default::default()
-                        },
-                    });
-                    let n = n.map(|norm| match get_token_int(&norm) {
-                        Ok(s) => s,
-                        Err(e) => {
-                            log::error!("{}", e);
-                            Default::default()
-                        },
-                    });
+                    let t = match t {
+                        Some(t) => t.map(|tex| match get_token_int(&tex) {
+                            Ok(s) => s,
+                            Err(e) => {
+                                log::error!("{}", e);
+                                Default::default()
+                            },
+                        }),
+                        None => None,
+                    };
+
+                    let n = match n {
+                        Some(n) => n.map(|norm| match get_token_int(&norm) {
+                            Ok(s) => s,
+                            Err(e) => {
+                                log::error!("{}", e);
+                                Default::default()
+                            },
+                        }),
+                        None => None,
+                    };
                     (v, t, n).into()
                 },
             ),
@@ -529,24 +541,34 @@ fn parse_material(input: &[Token]) -> IResult<&[Token], ModelElement> {
             token_match!(Token::String(_)),
         ),
         |s| {
-            if let Token::String(s) = s {
-                ModelElement::Material(s)
-            } else {
-                panic!();
-            }
+            let res = match get_token_string(&s) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("{}", e);
+                    Default::default()
+                },
+            };
+
+            ModelElement::Material(res)
         },
     )(input)
 }
 
 fn parse_obj_name(input: &[Token]) -> IResult<&[Token], ModelElement> {
     map(
-        preceded(token_match!(Token::Object), token_match!(Token::String(_))),
+        preceded(
+            token_match!(Token::Object),
+            token_match!(Token::String(_) | Token::Int(_)),
+        ),
         |s| {
-            if let Token::String(s) = s {
-                ModelElement::ObjName(s)
-            } else {
-                panic!();
-            }
+            let res = match get_token_string(&s) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("{}", e);
+                    Default::default()
+                },
+            };
+            ModelElement::ObjName(res)
         },
     )(input)
 }
@@ -558,12 +580,15 @@ fn parse_smoothing(input: &[Token]) -> IResult<&[Token], ModelElement> {
             alt((
                 token_match!(Token::Int(_)),
                 map(token_match!(Token::String(_)), |s| {
-                    if let Token::String(s) = s {
-                        if s == "off" {
-                            Token::Int(0)
-                        } else {
-                            panic!();
-                        }
+                    let val = match get_on_off_from_str(&s) {
+                        Ok(v) => v,
+                        Err(e) => {
+                            log::error!("{}", e);
+                            Default::default()
+                        },
+                    };
+                    if !val {
+                        Token::Int(0)
                     } else {
                         panic!();
                     }
@@ -571,11 +596,14 @@ fn parse_smoothing(input: &[Token]) -> IResult<&[Token], ModelElement> {
             )),
         ),
         |s| {
-            if let Token::Int(s) = s {
-                ModelElement::Smoothing(s)
-            } else {
-                panic!();
-            }
+            let res = match get_token_int(&s) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("{}", e);
+                    Default::default()
+                },
+            };
+            ModelElement::Smoothing(res)
         },
     )(input)
 }
@@ -584,14 +612,18 @@ fn parse_bevel(input: &[Token]) -> IResult<&[Token], ModelElement> {
     map(
         preceded(token_match!(Token::Bevel), token_match!(Token::String(_))),
         |s| {
-            if let Token::String(s) = s {
-                if let Ok(flag) = s.parse::<bool>() {
-                    ModelElement::Bevel(flag)
-                } else {
-                    panic!();
-                }
+            let res = match get_token_string(&s) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("{}", e);
+                    Default::default()
+                },
+            };
+
+            if let Ok(flag) = res.parse::<bool>() {
+                ModelElement::Bevel(flag)
             } else {
-                panic!();
+                ModelElement::Bevel(false)
             }
         },
     )(input)
@@ -601,14 +633,18 @@ fn parse_c_interp(input: &[Token]) -> IResult<&[Token], ModelElement> {
     map(
         preceded(token_match!(Token::CInterp), token_match!(Token::String(_))),
         |s| {
-            if let Token::String(s) = s {
-                if let Ok(flag) = s.parse::<bool>() {
-                    ModelElement::CInterp(flag)
-                } else {
-                    panic!();
-                }
+            let res = match get_token_string(&s) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("{}", e);
+                    Default::default()
+                },
+            };
+
+            if let Ok(flag) = res.parse::<bool>() {
+                ModelElement::CInterp(flag)
             } else {
-                panic!();
+                ModelElement::CInterp(false)
             }
         },
     )(input)
@@ -618,14 +654,18 @@ fn parse_d_interp(input: &[Token]) -> IResult<&[Token], ModelElement> {
     map(
         preceded(token_match!(Token::DInterp), token_match!(Token::String(_))),
         |s| {
-            if let Token::String(s) = s {
-                if let Ok(flag) = s.parse::<bool>() {
-                    ModelElement::DInterp(flag)
-                } else {
-                    panic!();
-                }
+            let res = match get_token_string(&s) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("{}", e);
+                    Default::default()
+                },
+            };
+
+            if let Ok(flag) = res.parse::<bool>() {
+                ModelElement::DInterp(flag)
             } else {
-                panic!();
+                ModelElement::DInterp(false)
             }
         },
     )(input)
@@ -635,11 +675,14 @@ fn parse_lod(input: &[Token]) -> IResult<&[Token], ModelElement> {
     map(
         preceded(token_match!(Token::Lod), token_match!(Token::Int(_))),
         |s| {
-            if let Token::Int(s) = s {
-                ModelElement::Lod(s)
-            } else {
-                panic!();
-            }
+            let res = match get_token_int(&s) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("{}", e);
+                    Default::default()
+                },
+            };
+            ModelElement::Lod(res)
         },
     )(input)
 }
@@ -651,11 +694,15 @@ fn parse_shadow_obj(input: &[Token]) -> IResult<&[Token], ModelElement> {
             token_match!(Token::String(_)),
         ),
         |s| {
-            if let Token::String(s) = s {
-                ModelElement::ShadowObj(s)
-            } else {
-                panic!();
-            }
+            let res = match get_token_string(&s) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("{}", e);
+                    Default::default()
+                },
+            };
+
+            ModelElement::ShadowObj(res)
         },
     )(input)
 }
@@ -667,11 +714,15 @@ fn parse_trace_obj(input: &[Token]) -> IResult<&[Token], ModelElement> {
             token_match!(Token::String(_)),
         ),
         |s| {
-            if let Token::String(s) = s {
-                ModelElement::TraceObj(s)
-            } else {
-                panic!();
-            }
+            let res = match get_token_string(&s) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("{}", e);
+                    Default::default()
+                },
+            };
+
+            ModelElement::TraceObj(res)
         },
     )(input)
 }
@@ -681,11 +732,15 @@ fn parse_texture_lib(input: &[Token]) -> IResult<&[Token], ModelElement> {
         preceded(
             token_match!(Token::TextureMapLib),
             many1(map(token_match!(Token::String(_)), |s| {
-                if let Token::String(s) = s {
-                    s
-                } else {
-                    panic!();
-                }
+                let res = match get_token_string(&s) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        log::error!("{}", e);
+                        Default::default()
+                    },
+                };
+
+                res
             })),
         ),
         ModelElement::TextureLib,
@@ -699,11 +754,15 @@ fn parse_texture_map(input: &[Token]) -> IResult<&[Token], ModelElement> {
             token_match!(Token::String(_)),
         ),
         |s| {
-            if let Token::String(s) = s {
-                ModelElement::TextureMap(s)
-            } else {
-                panic!();
-            }
+            let res = match get_token_string(&s) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("{}", e);
+                    Default::default()
+                },
+            };
+
+            ModelElement::TextureMap(res)
         },
     )(input)
 }

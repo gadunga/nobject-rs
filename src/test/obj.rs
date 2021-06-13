@@ -1,6 +1,13 @@
-use crate::tokenizer::{
-    parse_obj,
-    Token,
+use crate::{
+    model::{
+        Face,
+        FaceElement,
+        Vertex,
+    },
+    tokenizer::{
+        parse_obj,
+        Token,
+    },
 };
 
 #[test]
@@ -225,4 +232,266 @@ fn simple_object() {
     assert_eq!(tokens.len(), 2);
     assert_eq!(tokens[0], Token::Object);
     assert_eq!(tokens[1], Token::String("some_object".to_string()));
+}
+
+#[test]
+fn cube_test() {
+    let input = "#	                Vertices: 8
+    #	                  Points: 0
+    #	                   Lines: 0
+    #	                   Faces: 6
+    #	               Materials: 1
+    
+    o 1
+    
+    # Vertex list
+    
+    v -0.5 -0.5 0.5
+    v -0.5 -0.5 -0.5
+    v -0.5 0.5 -0.5
+    v -0.5 0.5 0.5
+    v 0.5 -0.5 0.5
+    v 0.5 -0.5 -0.5
+    v 0.5 0.5 -0.5
+    v 0.5 0.5 0.5
+    
+    # Point/Line/Face list
+    
+    usemtl Default
+    f 4 3 2 1
+    f 2 6 5 1
+    f 3 7 6 2
+    f 8 7 3 4
+    f 5 8 4 1
+    f 6 7 8 5
+    
+    # End of file
+    ";
+
+    let res = crate::load_obj(&input).unwrap();
+    dbg!(&res);
+    assert_eq!(res.vertices.len(), 8);
+    assert_eq!(
+        res.vertices[0],
+        Vertex {
+            x: -0.5,
+            y: -0.5,
+            z: 0.5,
+            w: None,
+        }
+    );
+    assert_eq!(
+        res.vertices[1],
+        Vertex {
+            x: -0.5,
+            y: -0.5,
+            z: -0.5,
+            w: None,
+        }
+    );
+    assert_eq!(
+        res.vertices[2],
+        Vertex {
+            x: -0.5,
+            y: 0.5,
+            z: -0.5,
+            w: None,
+        }
+    );
+    assert_eq!(
+        res.vertices[3],
+        Vertex {
+            x: -0.5,
+            y: 0.5,
+            z: 0.5,
+            w: None,
+        }
+    );
+    assert_eq!(
+        res.vertices[4],
+        Vertex {
+            x: 0.5,
+            y: -0.5,
+            z: 0.5,
+            w: None,
+        }
+    );
+    assert_eq!(
+        res.vertices[5],
+        Vertex {
+            x: 0.5,
+            y: -0.5,
+            z: -0.5,
+            w: None,
+        }
+    );
+    assert_eq!(
+        res.vertices[6],
+        Vertex {
+            x: 0.5,
+            y: 0.5,
+            z: -0.5,
+            w: None,
+        }
+    );
+    assert_eq!(
+        res.vertices[7],
+        Vertex {
+            x: 0.5,
+            y: 0.5,
+            z: 0.5,
+            w: None,
+        }
+    );
+
+    let group = &res.groups["default"];
+    assert_eq!(group.material_name, "Default".to_string());
+    assert_eq!(res.normals.len(), 0);
+    assert_eq!(res.faces.len(), 1);
+    let face_group = &res.faces["default"];
+    assert_eq!(face_group.len(), 6);
+    assert_eq!(
+        face_group[0],
+        Face {
+            elements: vec![
+                FaceElement {
+                    vertex_index: 4,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 3,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 2,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 1,
+                    ..Default::default()
+                }
+            ],
+            ..Default::default()
+        }
+    );
+    assert_eq!(
+        face_group[1],
+        Face {
+            elements: vec![
+                FaceElement {
+                    vertex_index: 2,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 6,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 5,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 1,
+                    ..Default::default()
+                }
+            ],
+            ..Default::default()
+        }
+    );
+    assert_eq!(
+        face_group[2],
+        Face {
+            elements: vec![
+                FaceElement {
+                    vertex_index: 3,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 7,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 6,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 2,
+                    ..Default::default()
+                }
+            ],
+            ..Default::default()
+        }
+    );
+    assert_eq!(
+        face_group[3],
+        Face {
+            elements: vec![
+                FaceElement {
+                    vertex_index: 8,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 7,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 3,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 4,
+                    ..Default::default()
+                }
+            ],
+            ..Default::default()
+        }
+    );
+    assert_eq!(
+        face_group[4],
+        Face {
+            elements: vec![
+                FaceElement {
+                    vertex_index: 5,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 8,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 4,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 1,
+                    ..Default::default()
+                }
+            ],
+            ..Default::default()
+        }
+    );
+    assert_eq!(
+        face_group[5],
+        Face {
+            elements: vec![
+                FaceElement {
+                    vertex_index: 6,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 7,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 8,
+                    ..Default::default()
+                },
+                FaceElement {
+                    vertex_index: 5,
+                    ..Default::default()
+                }
+            ],
+            ..Default::default()
+        }
+    );
 }

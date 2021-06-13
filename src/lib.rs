@@ -93,6 +93,10 @@ fn get_token_int(token: &Token) -> Result<i32, ObjError> {
 fn get_token_string(token: &Token) -> Result<String, ObjError> {
     if let Token::String(s) = token {
         Ok(s.clone())
+    } else if let Token::Int(i) = token {
+        Ok(i.to_string())
+    } else if let Token::Float(f) = token {
+        Ok(f.to_string())
     } else {
         Err(ObjError::UnexpectedToken(token.clone()))
     }
