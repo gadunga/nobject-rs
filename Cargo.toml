@@ -6,7 +6,8 @@ edition = "2018"
 license = "MIT"
 keywords = ["gamedev", "graphics", "wavefront", "obj", "mtl"]
 categories = ["rendering::data-formats"]
-
+repository = "https://github.com/gadunga/nobject-rs"
+description = "A parser for wavefront Obj/Mtl files. Written with Nom."
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
