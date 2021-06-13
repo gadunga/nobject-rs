@@ -14,7 +14,6 @@ use crate::{
     get_token_float,
     get_token_int,
     get_token_string,
-    token_match,
     tokenizer::Token,
 };
 
@@ -37,86 +36,152 @@ use nom::{
 };
 use thiserror::Error;
 
+/// A wrapper for an underlying error which occurred
+/// while parsing the token stream.
 #[derive(Error, Debug)]
 pub enum ModelError {
     #[error("Parse Error: `{0}`")]
     Parse(String),
 }
 
+/// Representation of vertex data. The w component is optional.
 #[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Vertex {
+    /// X coordinate
     pub x: f32,
+    /// Y coordinate
     pub y: f32,
+    /// Z coordinate
     pub z: f32,
+    /// Optional W coordinate
     pub w: Option<f32>,
 }
 
+/// Representation of normal data.
 #[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Normal {
+    /// X coordinate
     pub x: f32,
+    /// Y coordinate
     pub y: f32,
+    /// Z coordinate
     pub z: f32,
 }
 
+/// Representation of texture data. v/w are optional.
 #[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Texture {
+    /// U coordinate
     pub u: f32,
+    /// Optional V coordinate
     pub v: Option<f32>,
+    /// Optional W coordinate
     pub w: Option<f32>,
 }
 
+/// Defines the settings that get applied to a group of faces.
 #[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Group {
+    /// The name of the material to apply to the group.
     pub material_name: String,
+    /// Bevel interpolation setting.
     pub bevel:         bool,
+    /// Color interpolation setting.
     pub c_interp:      bool,
+    /// Disolve interpolation setting.
     pub d_interp:      bool,
+    /// Level of detail setting.
     pub lod:           u8,
+    /// The name of the texture map file.
     pub texture_map:   Option<String>,
 }
 
+/// Holds the vertex/texture/normal indicies for a part of a face.
 #[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct FaceElement {
+    /// Vertex index. Note that these START at 1, NOT 0.
     pub vertex_index:  i32,
+    /// Optional texture index. Note that these START at 1, NOT 0.
     pub texture_index: Option<i32>,
+    /// Optional normal index. Note that these START at 1, NOT 0.
     pub normal_index:  Option<i32>,
 }
 
+/// The primary purpose is to store the collection of
+/// elements (vertices/normals/texture coordinates) that
+/// compose a face. This also contains a smoothing group
+/// identifier, as specified by the obj file.
 #[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Face {
+    /// Collection of `FaceElement`.
     pub elements:        Vec<FaceElement>,
+    /// The smoothing group identifier.
     pub smoothing_group: i32,
 }
 
+/// Contains the indicies for a line element.
 #[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct LineElement {
+    /// Vertex index. Note that these START at 1, NOT 0.
     pub vertex_index:  i32,
+    /// Optional texture index. Note that these START at 1, NOT 0.
     pub texture_index: Option<i32>,
 }
 
+/// Contains the set of elements which compose a line.
 #[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Line {
+    /// Set of line elements.
     pub elements: Vec<LineElement>,
 }
 
+/// Contains a set of id's for the verticies which compose the point collection.
 #[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Point {
+    /// Set of vertex indices. Note that these START at 1, NOT 0.
     pub elements: Vec<i32>,
 }
 
+/// This holds the end result of parsing an obj file.
+/// The default group for all models is "default".
+/// That is to say, if no group is defined in a file,
+/// a "default" group will be used.  
+///
+/// Everything will fall under the "default" group until another group
+/// is specified.
 #[derive(Clone, Debug, From, Into)]
 pub struct Model {
-    pub vertices:            Vec<Vertex>,
-    pub normals:             Vec<Normal>,
-    pub textures:            Vec<Texture>,
-    pub faces:               HashMap<String, Vec<Face>>,
-    pub lines:               HashMap<String, Vec<Line>>,
-    pub points:              HashMap<String, Vec<Point>>,
-    pub groups:              HashMap<String, Group>,
-    pub material_libs:       Vec<String>,
-    pub texture_libs:        Vec<String>,
-    pub shadow_obj:          Option<String>,
-    pub trace_obj:           Option<String>,
+    /// Collection of vertex data
+    pub vertices:      Vec<Vertex>,
+    // Collection of normal data
+    pub normals:       Vec<Normal>,
+    /// Collection of texture coordinate data
+    pub textures:      Vec<Texture>,
+    /// A map of group name to a collection of faces which belong to the group
+    /// Everything will fall under the "default" group until another group
+    /// is specified.
+    pub faces:         HashMap<String, Vec<Face>>,
+    /// A map of group name to a collection of lines.
+    /// Everything will fall under the "default" group until another group
+    /// is specified.
+    pub lines:         HashMap<String, Vec<Line>>,
+    /// A map of group name to a collection of points.
+    /// Everything will fall under the "default" group until another group
+    /// is specified.
+    pub points:        HashMap<String, Vec<Point>>,
+    /// A map of group name to the groups specific data.
+    /// Everything will fall under the "default" group until another group
+    /// is specified.
+    pub groups:        HashMap<String, Group>,
+    /// The material library files to use with this obj.
+    pub material_libs: Vec<String>,
+    /// The texture library files to use with this obj.
+    pub texture_libs:  Vec<String>,
+    /// The file name for the shadow object
+    pub shadow_obj:    Option<String>,
+    /// The file name for the ray trace object
+    pub trace_obj:     Option<String>,
+
     current_group:           Vec<String>,
     current_smoothing_group: i32,
 }

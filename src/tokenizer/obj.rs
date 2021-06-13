@@ -20,8 +20,6 @@ use nom::{
     },
 };
 
-use crate::keyword_rule;
-
 use super::{
     Token,
     TokenizeError,

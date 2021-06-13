@@ -23,16 +23,26 @@ use nom::{
 };
 use thiserror::Error;
 
+/// An enum for possible ways of specifying a material color
 #[derive(Debug, Clone, PartialEq)]
 pub enum ColorType {
+    /// RGB
     Rgb(f32, f32, f32),
+    /// Reflectivity using a spectral curve.
+    /// This is specified as a filename and a multiplier (defaults to 1.0)
     Spectral(String, f32),
+    /// CIEXYZ color space
     CieXyz(f32, f32, f32),
 }
 
+/// Enum for the possible ways to specify the disolve
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DisolveType {
+    /// The amount this material dissolves into the background. 1.0 is fully
+    /// opaque
     Alpha(f32),
+    /// Specifies that the disolve is based on the orientation of the viewer.
+    /// The value is the minimum to apply to a material.
     Halo(f32),
 }
 
@@ -53,18 +63,30 @@ enum OptionElement {
     ReflectionType(String),
 }
 
+/// Common settings for texture maps which can be color corrected.
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct ColorCorrectedMap {
+    /// The name of the texture map file.
     pub file_name:     String,
+    /// Enable horizontal texture blending
     pub blend_u:       Option<bool>,
+    /// Enable vertical texture blending
     pub blend_v:       Option<bool>,
+    /// Enable color correction
     pub color_correct: Option<bool>,
+    /// Enables clamping.
     pub clamp:         Option<bool>,
-    /// -mm
+    /// Specifies the range over which scalar or color texture
+    /// values may vary. Corresponds to the `-mm` option.
     pub texture_range: Option<(f32, f32)>,
+    /// Offset the position in the texture map.
     pub offset:        Option<(f32, Option<f32>, Option<f32>)>,
+    /// Scale the size of the texture pattern.
     pub scale:         Option<(f32, Option<f32>, Option<f32>)>,
+    /// A turbulance value to apply to the texture.
     pub turbulance:    Option<(f32, Option<f32>, Option<f32>)>,
+    /// Allows the specification of a specific resolution to use
+    /// when an image is used as a texture.
     pub texture_res:   Option<i32>,
 }
 
@@ -108,18 +130,31 @@ impl ColorCorrectedMap {
     }
 }
 
+/// Common settings for texture maps which can not be color corrected.
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct NonColorCorrectedMap {
+    /// The name of the texture map file.
     pub file_name:     String,
+    /// Enable horizontal texture blending
     pub blend_u:       Option<bool>,
+    /// Enable vertical texture blending
     pub blend_v:       Option<bool>,
+    /// Enables clamping.
     pub clamp:         Option<bool>,
+    /// Specifies the channel used to create a scalar or
+    /// bump texture.
     pub imf_chan:      Option<String>,
-    /// -mm
+    /// Specifies the range over which scalar or color texture
+    /// values may vary. Corresponds to the `-mm` option.
     pub texture_range: Option<(f32, f32)>,
+    /// Offset the position in the texture map.
     pub offset:        Option<(f32, Option<f32>, Option<f32>)>,
+    /// Scale the size of the texture pattern.
     pub scale:         Option<(f32, Option<f32>, Option<f32>)>,
+    /// A turbulance value to apply to the texture.
     pub turbulance:    Option<(f32, Option<f32>, Option<f32>)>,
+    /// Allows the specification of a specific resolution to use
+    /// when an image is used as a texture.
     pub texture_res:   Option<i32>,
 }
 
@@ -161,9 +196,12 @@ impl NonColorCorrectedMap {
     }
 }
 
+/// Contains information specific to bump maps.
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct BumpMap {
+    /// Specifies a bump multiplier
     pub bump_multiplier: Option<f32>,
+    /// Additional map settings.
     pub map_settings:    Option<NonColorCorrectedMap>,
 }
 
@@ -184,9 +222,13 @@ impl BumpMap {
     }
 }
 
+/// Reflection specific information.
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct ReflectionMap {
+    /// This contains the name of the type of reflection to use.
+    /// Corresponds to `-type` in the specification.
     pub reflection_type: String,
+    /// Additional map settings.
     pub map_settings:    Option<ColorCorrectedMap>,
 }
 
@@ -207,28 +249,59 @@ impl ReflectionMap {
     }
 }
 
+/// Defines a single material.
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct Material {
+    /// The name of the material.
+    /// Corresponds to `newmtl` in the specification.
     pub name:                 String,
+    /// The ambient reflectivity value.
+    /// Corresponds to `Ka` in the specification.
     pub ambient:              Option<ColorType>,
+    /// The diffuse reflectivity value
+    /// Corresponds to `Kd` in the specification.
     pub diffuse:              Option<ColorType>,
+    /// The specular reflectivity value
+    /// Corresponds to `Ks` in the specification.
     pub specular:             Option<ColorType>,
+    /// The specular exponent.
+    /// Corresponds to `Ns` in the specification.
     pub specular_exponent:    Option<f32>,
+    /// The disolve.
+    /// Corresponds to `d` in the specification.
     pub disolve:              Option<DisolveType>,
+    /// Transparancy.
+    /// Corresponds to `Tr` in the specification.
     pub transparancy:         Option<f32>,
+    /// Transmission factor.
+    /// Corresponds to `Tf` in the specification.
     pub transmission_factor:  Option<ColorType>,
+    /// Corresponds to `sharpness` in the specification.
     pub sharpness:            Option<f32>,
+    /// Corresponds to `Ni` in the specification.
     pub index_of_refraction:  Option<f32>,
+    /// Corresponds to `illum` in the specification.
     pub illumination_mode:    Option<u32>,
+    /// Corresponds to `map_Ka` in the specification.
     pub texture_map_ambient:  Option<ColorCorrectedMap>,
+    /// Corresponds to `map_Kd` in the specification.
     pub texture_map_diffuse:  Option<ColorCorrectedMap>,
+    /// Corresponds to `map_Ks` in the specification.
     pub texture_map_specular: Option<ColorCorrectedMap>,
+    /// Corresponds to `map_Ns` in the specification.
     pub shininess_map:        Option<NonColorCorrectedMap>,
+    /// Corresponds to `map_d` in the specification.
     pub disolve_map:          Option<NonColorCorrectedMap>,
+    /// Corresponds to `disp` in the specification.
     pub displacement_map:     Option<NonColorCorrectedMap>,
+    /// Corresponds to `decal` in the specification.
     pub decal:                Option<NonColorCorrectedMap>,
+    /// Corresponds to `bump` in the specification.
     pub bump_map:             Option<BumpMap>,
+    /// Corresponds to `refl` in the specification.
     pub reflection_map:       Option<ReflectionMap>,
+    /// Enables/Disables anti-aliasing of textures in THIS material only.
+    /// Corresponds to `map_aat` in the specification.
     pub anti_alias_map:       Option<bool>,
 }
 
@@ -302,11 +375,16 @@ impl Material {
     }
 }
 
+/// A wrapper for an underlying error which occurred
+/// while parsing the token stream.
 #[derive(Error, Debug)]
 pub enum MaterialError {
     #[error("Parse Error: `{0}`")]
     Parse(String),
 
+    /// The specification generally requires a newmtl statement
+    /// to come before all other statements. If this error occurs
+    /// it's because we also expect a newmtl statement first.
     #[error("New Material expected, but not found.")]
     NewMaterial,
 }

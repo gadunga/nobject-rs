@@ -453,13 +453,6 @@ pub enum Token {
     OptionTextureResolution,
 }
 
-#[macro_export]
-macro_rules! keyword_rule {
-    ($name:expr, $token:ident) => {
-        map(tag_no_case($name), |_| Token::$token)
-    };
-}
-
 pub(self) fn parse_digit(input: &str) -> IResult<&str, Token> {
     map(
         tuple((
