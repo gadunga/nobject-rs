@@ -227,7 +227,7 @@ fn get_on_off_from_str(token: &Token) -> Result<bool, ObjError> {
     let s = get_token_string(&token)?;
     match s.as_str() {
         "on" => Ok(true),
-        "off" => Ok(true),
+        "off" => Ok(false),
         _ => Err(ObjError::InvalidOnOffValue(s.clone())),
     }
 }

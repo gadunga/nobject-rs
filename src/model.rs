@@ -655,7 +655,8 @@ fn parse_smoothing(input: &[Token]) -> IResult<&[Token], ModelElement> {
                     if !val {
                         Token::Int(0)
                     } else {
-                        panic!();
+                        log::error!("Invalid smoothing value encountered. Setting default to 1.");
+                        Token::Int(1)
                     }
                 }),
             )),
