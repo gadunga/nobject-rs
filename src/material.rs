@@ -444,7 +444,6 @@ pub(crate) fn parse(input: &[Token]) -> Result<Vec<Material>, MaterialError> {
     };
 
     let mut res = Vec::new();
-    dbg!(&elements);
     for e in elements {
         if let MaterialElement::Name(n) = e {
             res.push(Material::default());
