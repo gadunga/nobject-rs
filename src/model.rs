@@ -45,7 +45,7 @@ pub enum ModelError {
 }
 
 /// Representation of vertex data. The w component is optional.
-#[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
+#[derive(Copy, Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Vertex {
     /// X coordinate
     pub x: f32,
@@ -58,7 +58,7 @@ pub struct Vertex {
 }
 
 /// Representation of normal data.
-#[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
+#[derive(Copy, Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Normal {
     /// X coordinate
     pub x: f32,
@@ -69,7 +69,7 @@ pub struct Normal {
 }
 
 /// Representation of texture data. v/w are optional.
-#[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
+#[derive(Copy, Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct Texture {
     /// U coordinate
     pub u: f32,
@@ -97,7 +97,7 @@ pub struct Group {
 }
 
 /// Holds the vertex/texture/normal indicies for a part of a face.
-#[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
+#[derive(Copy, Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct FaceElement {
     /// Vertex index. Note that these START at 1, NOT 0.
     pub vertex_index:  i32,
@@ -120,7 +120,7 @@ pub struct Face {
 }
 
 /// Contains the indicies for a line element.
-#[derive(Clone, Constructor, Debug, Default, From, Into, PartialEq)]
+#[derive(Copy, Clone, Constructor, Debug, Default, From, Into, PartialEq)]
 pub struct LineElement {
     /// Vertex index. Note that these START at 1, NOT 0.
     pub vertex_index:  i32,
