@@ -329,10 +329,10 @@ fn parse_vertex(input: &[Token]) -> IResult<&[Token], Vertex> {
         preceded(
             token_match!(Token::Vertex),
             tuple((
-                token_match!(Token::Float(_)),
-                token_match!(Token::Float(_)),
-                token_match!(Token::Float(_)),
-                opt(token_match!(Token::Float(_))),
+                token_match!(Token::Float(_) | Token::Int(_)),
+                token_match!(Token::Float(_) | Token::Int(_)),
+                token_match!(Token::Float(_) | Token::Int(_)),
+                opt(token_match!(Token::Float(_) | Token::Int(_))),
             )),
         ),
         |(x, y, z, w)| {
@@ -376,9 +376,9 @@ fn parse_vertex_normal(input: &[Token]) -> IResult<&[Token], Normal> {
         preceded(
             token_match!(Token::VertexNormal),
             tuple((
-                token_match!(Token::Float(_)),
-                token_match!(Token::Float(_)),
-                token_match!(Token::Float(_)),
+                token_match!(Token::Float(_) | Token::Int(_)),
+                token_match!(Token::Float(_) | Token::Int(_)),
+                token_match!(Token::Float(_) | Token::Int(_)),
             )),
         ),
         |(x, y, z)| {
@@ -415,9 +415,9 @@ fn parse_vertex_texture(input: &[Token]) -> IResult<&[Token], Texture> {
         preceded(
             token_match!(Token::VertexTexture),
             tuple((
-                token_match!(Token::Float(_)),
-                opt(token_match!(Token::Float(_))),
-                opt(token_match!(Token::Float(_))),
+                token_match!(Token::Float(_) | Token::Int(_)),
+                opt(token_match!(Token::Float(_) | Token::Int(_))),
+                opt(token_match!(Token::Float(_) | Token::Int(_))),
             )),
         ),
         |(u, v, w)| {

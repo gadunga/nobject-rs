@@ -1,3 +1,4 @@
+#![allow(clippy::needless_doctest_main)]
 //! # Overview
 //!
 //! `nobject-rs` is a library for parsing wavefront .obj and .mtl content.

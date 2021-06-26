@@ -5,8 +5,6 @@ mod obj;
 mod test;
 
 pub use mtl::parse_mtl;
-pub use obj::parse_obj;
-
 use nom::{
     branch::alt,
     bytes::complete::tag,
@@ -22,6 +20,7 @@ use nom::{
     sequence::tuple,
     IResult,
 };
+pub use obj::parse_obj;
 
 use thiserror::Error;
 
@@ -472,6 +471,7 @@ pub(self) fn parse_digit(input: &str) -> IResult<&str, Token> {
     )(input)
 }
 
+#[allow(clippy::type_complexity)]
 pub(self) fn parse_float(input: &str) -> IResult<&str, Token> {
     map(
         tuple((
@@ -488,8 +488,24 @@ pub(self) fn parse_float(input: &str) -> IResult<&str, Token> {
                             acc.push(item);
                             acc
                         })),
+                        opt(map(
+                            tuple((
+                                alt((tag("e"), tag("E"))),
+                                opt(alt((tag("+"), tag("-")))),
+                                digit1,
+                            )),
+                            |(e, sign, digits)| {
+                                let mut acc = String::new();
+                                acc.push_str(e);
+                                if let Some(sign) = sign {
+                                    acc.push_str(sign);
+                                }
+                                acc.push_str(digits);
+                                acc
+                            },
+                        )),
                     )),
-                    |(f, _, s)| (f, s.unwrap_or_default()),
+                    |(f, _, s, e)| (f, s.unwrap_or_default(), e.unwrap_or_default()),
                 ),
                 map(
                     tuple((
@@ -502,12 +518,28 @@ pub(self) fn parse_float(input: &str) -> IResult<&str, Token> {
                             acc.push(item);
                             acc
                         }),
+                        opt(map(
+                            tuple((
+                                alt((tag("e"), tag("E"))),
+                                opt(alt((tag("+"), tag("-")))),
+                                digit1,
+                            )),
+                            |(e, sign, digits)| {
+                                let mut acc = String::new();
+                                acc.push_str(e);
+                                if let Some(sign) = sign {
+                                    acc.push_str(sign);
+                                }
+                                acc.push_str(digits);
+                                acc
+                            },
+                        )),
                     )),
-                    |(f, _, s)| (f.unwrap_or_default(), s),
+                    |(f, _, s, e)| (f.unwrap_or_default(), s, e.unwrap_or_default()),
                 ),
             )),
         )),
-        |(sign, (f, s)): (Option<&str>, (Vec<&str>, Vec<&str>))| {
+        |(sign, (f, s, e)): (Option<&str>, (Vec<&str>, Vec<&str>, String))| {
             let mut acc = Vec::new();
             if !f.is_empty() {
                 acc.extend(f);
@@ -515,6 +547,9 @@ pub(self) fn parse_float(input: &str) -> IResult<&str, Token> {
             acc.push(".");
             if !s.is_empty() {
                 acc.extend(s);
+            }
+            if !e.is_empty() {
+                acc.push(e.as_str());
             }
             let mut val = acc.join("").parse::<f32>().unwrap_or_default();
             if sign == Some("-") {
