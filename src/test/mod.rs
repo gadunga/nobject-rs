@@ -27,24 +27,24 @@ fn parse_double_comment_test() {
     assert_eq!(
         face.elements[0],
         FaceElement {
-            vertex_index:  11250,
-            normal_index:  Some(11250),
+            vertex_index: 11250,
+            normal_index: Some(11250),
             texture_index: None,
         }
     );
     assert_eq!(
         face.elements[1],
         FaceElement {
-            vertex_index:  4406,
-            normal_index:  Some(4406),
+            vertex_index: 4406,
+            normal_index: Some(4406),
             texture_index: None,
         }
     );
     assert_eq!(
         face.elements[2],
         FaceElement {
-            vertex_index:  31248,
-            normal_index:  Some(31248),
+            vertex_index: 31248,
+            normal_index: Some(31248),
             texture_index: None,
         }
     );
@@ -52,24 +52,24 @@ fn parse_double_comment_test() {
     assert_eq!(
         face.elements[0],
         FaceElement {
-            vertex_index:  9238,
-            normal_index:  Some(9238),
+            vertex_index: 9238,
+            normal_index: Some(9238),
             texture_index: None,
         }
     );
     assert_eq!(
         face.elements[1],
         FaceElement {
-            vertex_index:  25314,
-            normal_index:  Some(25314),
+            vertex_index: 25314,
+            normal_index: Some(25314),
             texture_index: None,
         }
     );
     assert_eq!(
         face.elements[2],
         FaceElement {
-            vertex_index:  21852,
-            normal_index:  Some(21852),
+            vertex_index: 21852,
+            normal_index: Some(21852),
             texture_index: None,
         }
     );

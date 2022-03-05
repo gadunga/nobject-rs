@@ -1,7 +1,4 @@
-use super::{
-    parse_digit,
-    parse_float,
-};
+use super::{parse_digit, parse_float};
 use crate::tokenizer::Token;
 
 macro_rules! parse_digit_test {

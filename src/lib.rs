@@ -91,35 +91,16 @@ mod model;
 use std::result::Result;
 
 pub use model::{
-    Face,
-    FaceElement,
-    Group,
-    Line,
-    LineElement,
-    Model,
-    ModelError,
-    Normal,
-    Point,
-    Texture,
-    Vertex,
+    Face, FaceElement, Group, Line, LineElement, Model, ModelError, Normal, Point, Texture, Vertex,
 };
 
 pub use material::{
-    BumpMap,
-    ColorCorrectedMap,
-    ColorType,
-    DisolveType,
-    Material,
-    MaterialError,
-    NonColorCorrectedMap,
-    ReflectionMap,
+    BumpMap, ColorCorrectedMap, ColorType, DisolveType, Material, MaterialError,
+    NonColorCorrectedMap, ReflectionMap,
 };
 
 use thiserror::Error;
-use tokenizer::{
-    Token,
-    TokenizeError,
-};
+use tokenizer::{Token, TokenizeError};
 
 /// The set of errors which might be generated.
 #[derive(Error, Debug)]
