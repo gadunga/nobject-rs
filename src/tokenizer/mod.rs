@@ -9,14 +9,8 @@ use nom::{
     branch::alt,
     bytes::complete::tag,
     character::complete::digit1,
-    combinator::{
-        map,
-        opt,
-    },
-    multi::{
-        fold_many0,
-        fold_many1,
-    },
+    combinator::{map, opt},
+    multi::{fold_many0, fold_many1},
     sequence::tuple,
     IResult,
 };

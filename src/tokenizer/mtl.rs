@@ -2,28 +2,14 @@ use std::result::Result;
 
 use nom::{
     branch::alt,
-    bytes::complete::{
-        is_not,
-        tag,
-        tag_no_case,
-    },
-    character::complete::{
-        line_ending,
-        multispace0,
-        multispace1,
-    },
+    bytes::complete::{is_not, tag, tag_no_case},
+    character::complete::{line_ending, multispace0, multispace1},
     combinator::map,
     multi::fold_many0,
-    sequence::{
-        delimited,
-        preceded,
-    },
+    sequence::{delimited, preceded},
 };
 
-use super::{
-    Token,
-    TokenizeError,
-};
+use super::{Token, TokenizeError};
 
 pub fn parse_mtl(input: &str) -> Result<Vec<Token>, TokenizeError> {
     match fold_many0(

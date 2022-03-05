@@ -1,24 +1,14 @@
 use std::result::Result;
 
 use crate::{
-    get_on_off_from_str,
-    get_opt_token_float_opt,
-    get_token_float,
-    get_token_int,
-    get_token_string,
+    get_on_off_from_str, get_opt_token_float_opt, get_token_float, get_token_int, get_token_string,
     tokenizer::Token,
 };
 use nom::{
     branch::alt,
-    combinator::{
-        map,
-        opt,
-    },
+    combinator::{map, opt},
     multi::many1,
-    sequence::{
-        preceded,
-        tuple,
-    },
+    sequence::{preceded, tuple},
     IResult,
 };
 use thiserror::Error;
@@ -67,27 +57,27 @@ enum OptionElement {
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct ColorCorrectedMap {
     /// The name of the texture map file.
-    pub file_name:     String,
+    pub file_name: String,
     /// Enable horizontal texture blending
-    pub blend_u:       Option<bool>,
+    pub blend_u: Option<bool>,
     /// Enable vertical texture blending
-    pub blend_v:       Option<bool>,
+    pub blend_v: Option<bool>,
     /// Enable color correction
     pub color_correct: Option<bool>,
     /// Enables clamping.
-    pub clamp:         Option<bool>,
+    pub clamp: Option<bool>,
     /// Specifies the range over which scalar or color texture
     /// values may vary. Corresponds to the `-mm` option.
     pub texture_range: Option<(f32, f32)>,
     /// Offset the position in the texture map.
-    pub offset:        Option<(f32, Option<f32>, Option<f32>)>,
+    pub offset: Option<(f32, Option<f32>, Option<f32>)>,
     /// Scale the size of the texture pattern.
-    pub scale:         Option<(f32, Option<f32>, Option<f32>)>,
+    pub scale: Option<(f32, Option<f32>, Option<f32>)>,
     /// A turbulance value to apply to the texture.
-    pub turbulance:    Option<(f32, Option<f32>, Option<f32>)>,
+    pub turbulance: Option<(f32, Option<f32>, Option<f32>)>,
     /// Allows the specification of a specific resolution to use
     /// when an image is used as a texture.
-    pub texture_res:   Option<i32>,
+    pub texture_res: Option<i32>,
 }
 
 impl ColorCorrectedMap {
@@ -98,32 +88,32 @@ impl ColorCorrectedMap {
                 OptionElement::FileName(n) => res.file_name = n.clone(),
                 OptionElement::BlendU(b) => {
                     res.blend_u = Some(*b);
-                },
+                }
                 OptionElement::BlendV(b) => {
                     res.blend_v = Some(*b);
-                },
+                }
                 OptionElement::Cc(b) => {
                     res.color_correct = Some(*b);
-                },
+                }
                 OptionElement::Clamp(b) => {
                     res.clamp = Some(*b);
-                },
+                }
                 OptionElement::TextureRange((base, gain)) => {
                     res.texture_range = Some((*base, *gain));
-                },
+                }
                 OptionElement::Offset((x, y, z)) => {
                     res.offset = Some((*x, *y, *z));
-                },
+                }
                 OptionElement::Scale((x, y, z)) => {
                     res.scale = Some((*x, *y, *z));
-                },
+                }
                 OptionElement::Turbulance((x, y, z)) => {
                     res.turbulance = Some((*x, *y, *z));
-                },
+                }
                 OptionElement::TextureRes(tex_res) => {
                     res.texture_res = Some(*tex_res);
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
         res
@@ -134,28 +124,28 @@ impl ColorCorrectedMap {
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct NonColorCorrectedMap {
     /// The name of the texture map file.
-    pub file_name:     String,
+    pub file_name: String,
     /// Enable horizontal texture blending
-    pub blend_u:       Option<bool>,
+    pub blend_u: Option<bool>,
     /// Enable vertical texture blending
-    pub blend_v:       Option<bool>,
+    pub blend_v: Option<bool>,
     /// Enables clamping.
-    pub clamp:         Option<bool>,
+    pub clamp: Option<bool>,
     /// Specifies the channel used to create a scalar or
     /// bump texture.
-    pub imf_chan:      Option<String>,
+    pub imf_chan: Option<String>,
     /// Specifies the range over which scalar or color texture
     /// values may vary. Corresponds to the `-mm` option.
     pub texture_range: Option<(f32, f32)>,
     /// Offset the position in the texture map.
-    pub offset:        Option<(f32, Option<f32>, Option<f32>)>,
+    pub offset: Option<(f32, Option<f32>, Option<f32>)>,
     /// Scale the size of the texture pattern.
-    pub scale:         Option<(f32, Option<f32>, Option<f32>)>,
+    pub scale: Option<(f32, Option<f32>, Option<f32>)>,
     /// A turbulance value to apply to the texture.
-    pub turbulance:    Option<(f32, Option<f32>, Option<f32>)>,
+    pub turbulance: Option<(f32, Option<f32>, Option<f32>)>,
     /// Allows the specification of a specific resolution to use
     /// when an image is used as a texture.
-    pub texture_res:   Option<i32>,
+    pub texture_res: Option<i32>,
 }
 
 impl NonColorCorrectedMap {
@@ -166,30 +156,30 @@ impl NonColorCorrectedMap {
                 OptionElement::FileName(n) => res.file_name = n.clone(),
                 OptionElement::BlendU(b) => {
                     res.blend_u = Some(*b);
-                },
+                }
                 OptionElement::BlendV(b) => {
                     res.blend_v = Some(*b);
-                },
+                }
                 OptionElement::Clamp(b) => {
                     res.clamp = Some(*b);
-                },
+                }
                 OptionElement::ImfChan(chan) => res.imf_chan = Some(chan.clone()),
                 OptionElement::TextureRange((base, gain)) => {
                     res.texture_range = Some((*base, *gain));
-                },
+                }
                 OptionElement::Offset((x, y, z)) => {
                     res.offset = Some((*x, *y, *z));
-                },
+                }
                 OptionElement::Scale((x, y, z)) => {
                     res.scale = Some((*x, *y, *z));
-                },
+                }
                 OptionElement::Turbulance((x, y, z)) => {
                     res.turbulance = Some((*x, *y, *z));
-                },
+                }
                 OptionElement::TextureRes(tex_res) => {
                     res.texture_res = Some(*tex_res);
-                },
-                _ => {},
+                }
+                _ => {}
             }
         }
         res
@@ -202,7 +192,7 @@ pub struct BumpMap {
     /// Specifies a bump multiplier
     pub bump_multiplier: Option<f32>,
     /// Additional map settings.
-    pub map_settings:    Option<NonColorCorrectedMap>,
+    pub map_settings: Option<NonColorCorrectedMap>,
 }
 
 impl BumpMap {
@@ -229,7 +219,7 @@ pub struct ReflectionMap {
     /// Corresponds to `-type` in the specification.
     pub reflection_type: String,
     /// Additional map settings.
-    pub map_settings:    Option<ColorCorrectedMap>,
+    pub map_settings: Option<ColorCorrectedMap>,
 }
 
 impl ReflectionMap {
@@ -254,55 +244,55 @@ impl ReflectionMap {
 pub struct Material {
     /// The name of the material.
     /// Corresponds to `newmtl` in the specification.
-    pub name:                 String,
+    pub name: String,
     /// The ambient reflectivity value.
     /// Corresponds to `Ka` in the specification.
-    pub ambient:              Option<ColorType>,
+    pub ambient: Option<ColorType>,
     /// The diffuse reflectivity value
     /// Corresponds to `Kd` in the specification.
-    pub diffuse:              Option<ColorType>,
+    pub diffuse: Option<ColorType>,
     /// The specular reflectivity value
     /// Corresponds to `Ks` in the specification.
-    pub specular:             Option<ColorType>,
+    pub specular: Option<ColorType>,
     /// The specular exponent.
     /// Corresponds to `Ns` in the specification.
-    pub specular_exponent:    Option<f32>,
+    pub specular_exponent: Option<f32>,
     /// The disolve.
     /// Corresponds to `d` in the specification.
-    pub disolve:              Option<DisolveType>,
+    pub disolve: Option<DisolveType>,
     /// Transparancy.
     /// Corresponds to `Tr` in the specification.
-    pub transparancy:         Option<f32>,
+    pub transparancy: Option<f32>,
     /// Transmission factor.
     /// Corresponds to `Tf` in the specification.
-    pub transmission_factor:  Option<ColorType>,
+    pub transmission_factor: Option<ColorType>,
     /// Corresponds to `sharpness` in the specification.
-    pub sharpness:            Option<f32>,
+    pub sharpness: Option<f32>,
     /// Corresponds to `Ni` in the specification.
-    pub index_of_refraction:  Option<f32>,
+    pub index_of_refraction: Option<f32>,
     /// Corresponds to `illum` in the specification.
-    pub illumination_mode:    Option<u32>,
+    pub illumination_mode: Option<u32>,
     /// Corresponds to `map_Ka` in the specification.
-    pub texture_map_ambient:  Option<ColorCorrectedMap>,
+    pub texture_map_ambient: Option<ColorCorrectedMap>,
     /// Corresponds to `map_Kd` in the specification.
-    pub texture_map_diffuse:  Option<ColorCorrectedMap>,
+    pub texture_map_diffuse: Option<ColorCorrectedMap>,
     /// Corresponds to `map_Ks` in the specification.
     pub texture_map_specular: Option<ColorCorrectedMap>,
     /// Corresponds to `map_Ns` in the specification.
-    pub shininess_map:        Option<NonColorCorrectedMap>,
+    pub shininess_map: Option<NonColorCorrectedMap>,
     /// Corresponds to `map_d` in the specification.
-    pub disolve_map:          Option<NonColorCorrectedMap>,
+    pub disolve_map: Option<NonColorCorrectedMap>,
     /// Corresponds to `disp` in the specification.
-    pub displacement_map:     Option<NonColorCorrectedMap>,
+    pub displacement_map: Option<NonColorCorrectedMap>,
     /// Corresponds to `decal` in the specification.
-    pub decal:                Option<NonColorCorrectedMap>,
+    pub decal: Option<NonColorCorrectedMap>,
     /// Corresponds to `bump` in the specification.
-    pub bump_map:             Option<BumpMap>,
+    pub bump_map: Option<BumpMap>,
     /// Corresponds to `refl` in the specification.
-    pub reflection_map:       Option<ReflectionMap>,
+    pub reflection_map: Option<ReflectionMap>,
     /// Enables/Disables anti-aliasing of textures in THIS material only.
     /// Corresponds to `map_aat` in the specification.
-    pub anti_alias_map:       Option<bool>,
+    pub anti_alias_map: Option<bool>,
 }
 
 impl Material {
@@ -310,67 +300,67 @@ impl Material {
         match element {
             MaterialElement::Name(n) => {
                 self.name = n.clone();
-            },
+            }
             MaterialElement::Ambient(c) => {
                 self.ambient = Some(c.clone());
-            },
+            }
             MaterialElement::Diffuse(c) => {
                 self.diffuse = Some(c.clone());
-            },
+            }
             MaterialElement::Specular(c) => {
                 self.specular = Some(c.clone());
-            },
+            }
             MaterialElement::SpecularExponent(f) => {
                 self.specular_exponent = Some(*f);
-            },
+            }
             MaterialElement::Disolve(d) => {
                 self.disolve = Some(*d);
-            },
+            }
             MaterialElement::Transparency(f) => {
                 self.transparancy = Some(*f);
-            },
+            }
             MaterialElement::TransmissionFactor(c) => {
                 self.transmission_factor = Some(c.clone());
-            },
+            }
             MaterialElement::Sharpness(f) => {
                 self.sharpness = Some(*f);
-            },
+            }
             MaterialElement::IndexOfRefraction(f) => {
                 self.index_of_refraction = Some(*f);
-            },
+            }
             MaterialElement::IlluminationModel(u) => {
                 self.illumination_mode = Some(*u);
-            },
+            }
             MaterialElement::TexMapAmbient(cc) => {
                 self.texture_map_ambient = Some(cc.clone());
-            },
+            }
             MaterialElement::TexMapDiffuse(cc) => {
                 self.texture_map_diffuse = Some(cc.clone());
-            },
+            }
             MaterialElement::TexMapSpecular(cc) => {
                 self.texture_map_specular = Some(cc.clone());
-            },
+            }
             MaterialElement::ShininessMap(ncc) => {
                 self.shininess_map = Some(ncc.clone());
-            },
+            }
             MaterialElement::DisolveMap(ncc) => {
                 self.disolve_map = Some(ncc.clone());
-            },
+            }
             MaterialElement::DisplacementMap(ncc) => {
                 self.displacement_map = Some(ncc.clone());
-            },
+            }
             MaterialElement::Decal(ncc) => {
                 self.decal = Some(ncc.clone());
-            },
+            }
             MaterialElement::BumpMap(bm) => {
                 self.bump_map = Some(bm.clone());
-            },
+            }
             MaterialElement::ReflectionMap(rm) => {
                 self.reflection_map = Some(rm.clone());
-            },
+            }
             MaterialElement::AntiAliasMap(b) => {
                 self.anti_alias_map = Some(*b);
-            },
+            }
         }
     }
 }
@@ -471,7 +461,7 @@ fn parse_new_material(input: &[Token]) -> IResult<&[Token], MaterialElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             MaterialElement::Name(name)
         },
@@ -492,14 +482,14 @@ fn parse_color_type(input: &[Token]) -> IResult<&[Token], ColorType> {
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    },
+                    }
                 };
                 let factor = match get_opt_token_float_opt(&factor) {
                     Ok(s) => s.unwrap_or(1.0),
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    },
+                    }
                 };
                 ColorType::Spectral(file_name, factor)
             },
@@ -517,7 +507,7 @@ fn parse_color_type(input: &[Token]) -> IResult<&[Token], ColorType> {
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    },
+                    }
                 };
                 let y = match y_token {
                     Some(y) => match get_token_float(&y) {
@@ -525,7 +515,7 @@ fn parse_color_type(input: &[Token]) -> IResult<&[Token], ColorType> {
                         Err(e) => {
                             log::error!("{}", e);
                             Default::default()
-                        },
+                        }
                     },
                     None => x,
                 };
@@ -535,7 +525,7 @@ fn parse_color_type(input: &[Token]) -> IResult<&[Token], ColorType> {
                         Err(e) => {
                             log::error!("{}", e);
                             Default::default()
-                        },
+                        }
                     },
                     None => x,
                 };
@@ -556,21 +546,21 @@ fn parse_color_type(input: &[Token]) -> IResult<&[Token], ColorType> {
                         Err(e) => {
                             log::error!("{}", e);
                             Default::default()
-                        },
+                        }
                     },
                     match get_token_float(&g) {
                         Ok(s) => s,
                         Err(e) => {
                             log::error!("{}", e);
                             Default::default()
-                        },
+                        }
                     },
                     match get_token_float(&b) {
                         Ok(s) => s,
                         Err(e) => {
                             log::error!("{}", e);
                             Default::default()
-                        },
+                        }
                     },
                 );
 
@@ -610,7 +600,7 @@ fn parse_specular_exponent(input: &[Token]) -> IResult<&[Token], MaterialElement
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             MaterialElement::SpecularExponent(f)
         }),
@@ -632,7 +622,7 @@ fn parse_disolve(input: &[Token]) -> IResult<&[Token], MaterialElement> {
                         Err(e) => {
                             log::error!("{}", e);
                             Default::default()
-                        },
+                        }
                     };
                     MaterialElement::Disolve(DisolveType::Halo(f))
                 },
@@ -643,7 +633,7 @@ fn parse_disolve(input: &[Token]) -> IResult<&[Token], MaterialElement> {
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    },
+                    }
                 };
                 MaterialElement::Disolve(DisolveType::Alpha(f))
             }),
@@ -660,7 +650,7 @@ fn parse_transparency(input: &[Token]) -> IResult<&[Token], MaterialElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             MaterialElement::Transparency(f)
         }),
@@ -683,7 +673,7 @@ fn parse_sharpness(input: &[Token]) -> IResult<&[Token], MaterialElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             MaterialElement::Sharpness(f)
         }),
@@ -699,7 +689,7 @@ fn parse_index_of_refraction(input: &[Token]) -> IResult<&[Token], MaterialEleme
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             MaterialElement::IndexOfRefraction(f)
         }),
@@ -715,7 +705,7 @@ fn parse_illumination_model(input: &[Token]) -> IResult<&[Token], MaterialElemen
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             MaterialElement::IlluminationModel(f as u32)
         }),
@@ -812,7 +802,7 @@ fn parse_anti_alias_map(input: &[Token]) -> IResult<&[Token], MaterialElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             MaterialElement::AntiAliasMap(val)
         }),
@@ -838,7 +828,7 @@ fn parse_options(input: &[Token]) -> IResult<&[Token], Vec<OptionElement>> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             OptionElement::FileName(name)
         }),
@@ -858,7 +848,7 @@ fn parse_option_blend(input: &[Token]) -> IResult<&[Token], OptionElement> {
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    },
+                    }
                 };
                 OptionElement::BlendU(val)
             },
@@ -874,7 +864,7 @@ fn parse_option_blend(input: &[Token]) -> IResult<&[Token], OptionElement> {
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    },
+                    }
                 };
                 OptionElement::BlendV(val)
             },
@@ -894,7 +884,7 @@ fn parse_option_bm(input: &[Token]) -> IResult<&[Token], OptionElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             OptionElement::BumpMultiplier(val)
         },
@@ -913,7 +903,7 @@ fn parse_option_cc(input: &[Token]) -> IResult<&[Token], OptionElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             OptionElement::Cc(val)
         },
@@ -932,7 +922,7 @@ fn parse_option_clamp(input: &[Token]) -> IResult<&[Token], OptionElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             OptionElement::Clamp(val)
         },
@@ -951,14 +941,14 @@ fn parse_option_texture_range(input: &[Token]) -> IResult<&[Token], OptionElemen
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             let gain = match get_token_float(&gain) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             OptionElement::TextureRange((base, gain))
         },
@@ -981,21 +971,21 @@ fn parse_option_offset(input: &[Token]) -> IResult<&[Token], OptionElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             let y = match get_opt_token_float_opt(&y) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("{}", e);
                     None
-                },
+                }
             };
             let z = match get_opt_token_float_opt(&z) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("{}", e);
                     None
-                },
+                }
             };
             OptionElement::Offset((x, y, z))
         },
@@ -1018,21 +1008,21 @@ fn parse_option_scale(input: &[Token]) -> IResult<&[Token], OptionElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             let y = match get_opt_token_float_opt(&y) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("{}", e);
                     None
-                },
+                }
             };
             let z = match get_opt_token_float_opt(&z) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("{}", e);
                     None
-                },
+                }
             };
             OptionElement::Scale((x, y, z))
         },
@@ -1055,21 +1045,21 @@ fn parse_option_turbulance(input: &[Token]) -> IResult<&[Token], OptionElement> 
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             let y = match get_opt_token_float_opt(&y) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("{}", e);
                     None
-                },
+                }
             };
             let z = match get_opt_token_float_opt(&z) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("{}", e);
                     None
-                },
+                }
             };
             OptionElement::Turbulance((x, y, z))
         },
@@ -1088,7 +1078,7 @@ fn parse_option_texture_resolution(input: &[Token]) -> IResult<&[Token], OptionE
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             OptionElement::TextureRes(val)
         },
@@ -1107,7 +1097,7 @@ fn parse_option_imf_channel(input: &[Token]) -> IResult<&[Token], OptionElement>
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             OptionElement::ImfChan(val)
         },
@@ -1126,7 +1116,7 @@ fn parse_option_reflection_type(input: &[Token]) -> IResult<&[Token], OptionElem
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                },
+                }
             };
             OptionElement::ReflectionType(val)
         },
