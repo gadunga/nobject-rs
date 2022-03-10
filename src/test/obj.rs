@@ -3,7 +3,7 @@ use crate::{
     model,
     model::{Face, FaceElement, Vertex},
     tokenizer::{parse_obj, Token},
-    Line, LineElement, Material, Point, Texture,
+    Line, LineElement, Point, Texture,
 };
 
 #[test]
