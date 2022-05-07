@@ -161,6 +161,21 @@ pub enum Token {
     /// assumed to be equal to x.
     SpecularColor,
 
+    /// # Variants
+    /// Ke r g b
+    /// Ke spectral filename factor
+    /// Ke xyz x y z
+    ///
+    /// Variant Notes:
+    /// The "Ke spectral" statement specifies the emissive coefficient using a
+    /// spectral curve. "factor" is an optional and defaults to 1.0 if not
+    /// specified.
+    ///
+    /// "x y z" are the values of the CIEXYZ color space.  The y and z
+    /// arguments are optional.  If only x is specified, then y and z are
+    /// assumed to be equal to x.
+    EmissiveCoefficient,
+
     /// Ns s
     /// Shininess of the material. Default is 0.0
     SpecularExponent,

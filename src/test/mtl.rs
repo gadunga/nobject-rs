@@ -473,3 +473,46 @@ parse_material_test!(
         ..Default::default()
     }
 );
+
+parse_material_test!(
+    moon_test,
+    "# Material Count: 1
+    
+    newmtl Moon
+    Ns 96.078431
+    Ka 1.000000 1.000000 1.000000
+    Kd 0.640000 0.640000 0.640000
+    Ks 0.500000 0.500000 0.500000
+    Ke 0.000000 0.000000 0.000000
+    Ni 1.000000
+    d 1.000000
+    map_Kd -o 0 0 0 Diffuse_2K.png
+    bump -o 0 0 0 Bump_2K.png
+    illum 2
+    ",
+    Material {
+        name: "Moon".into(),
+        ambient: Some(ColorType::Rgb(1.0, 1.0, 1.0)),
+        diffuse: Some(ColorType::Rgb(0.64, 0.64, 0.64)),
+        specular: Some(ColorType::Rgb(0.5, 0.5, 0.5)),
+        emissive_coefficient: Some(ColorType::Rgb(0.0, 0.0, 0.0)),
+        specular_exponent: Some(96.078431),
+        index_of_refraction: Some(1.0),
+        disolve: Some(DisolveType::Alpha(1.0)),
+        texture_map_diffuse: Some(ColorCorrectedMap {
+            offset: Some((0.0, Some(0.0), Some(0.0))),
+            file_name: "Diffuse_2K.png".into(),
+            ..Default::default()
+        }),
+        bump_map: Some(BumpMap {
+            map_settings: Some(NonColorCorrectedMap {
+                offset: Some((0.0, Some(0.0), Some(0.0))),
+                file_name: "Bump_2K.png".into(),
+                ..Default::default()
+            }),
+            ..Default::default()
+        }),
+        illumination_mode: Some(2),
+        ..Default::default()
+    }
+);

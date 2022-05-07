@@ -22,6 +22,7 @@ pub fn parse_mtl(input: &str) -> Result<Vec<Token>, TokenizeError> {
                         keyword_rule!("ka", AmbientColor),
                         keyword_rule!("kd", DiffuseColor),
                         keyword_rule!("ks", SpecularColor),
+                        keyword_rule!("ke", EmissiveCoefficient),
                         keyword_rule!("ns", SpecularExponent),
                         keyword_rule!("tr", Transparancy),
                         keyword_rule!("spectral", Spectral),

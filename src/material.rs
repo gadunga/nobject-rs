@@ -254,6 +254,9 @@ pub struct Material {
     /// The specular reflectivity value
     /// Corresponds to `Ks` in the specification.
     pub specular: Option<ColorType>,
+    /// The Emission Coefficient
+    /// Corresponds to `Ke` in the specification.
+    pub emissive_coefficient: Option<ColorType>,
     /// The specular exponent.
     /// Corresponds to `Ns` in the specification.
     pub specular_exponent: Option<f32>,
@@ -309,6 +312,9 @@ impl Material {
             }
             MaterialElement::Specular(c) => {
                 self.specular = Some(c.clone());
+            }
+            MaterialElement::EmissiveCoefficient(c) => {
+                self.emissive_coefficient = Some(c.clone());
             }
             MaterialElement::SpecularExponent(f) => {
                 self.specular_exponent = Some(*f);
@@ -385,6 +391,7 @@ enum MaterialElement {
     Ambient(ColorType),
     Diffuse(ColorType),
     Specular(ColorType),
+    EmissiveCoefficient(ColorType),
     SpecularExponent(f32),
     Disolve(DisolveType),
     Transparency(f32),
@@ -406,27 +413,32 @@ enum MaterialElement {
 
 pub(crate) fn parse(input: &[Token]) -> Result<Vec<Material>, MaterialError> {
     let elements: Vec<MaterialElement> = match many1(alt((
-        parse_new_material,
-        parse_ambient,
-        parse_diffuse,
-        parse_specular,
-        parse_specular_exponent,
-        parse_disolve,
-        parse_transparency,
-        parse_transmission_factor,
-        parse_sharpness,
-        parse_index_of_refraction,
-        parse_illumination_model,
-        parse_texture_map_ambient,
-        parse_texture_map_diffuse,
-        parse_texture_map_specular,
-        parse_shininess_map,
-        parse_disolve_map,
-        parse_displacement_map,
-        parse_decal,
-        parse_bump_map,
-        parse_reflection_map,
-        parse_anti_alias_map,
+        alt((
+            parse_new_material,
+            parse_ambient,
+            parse_diffuse,
+            parse_specular,
+            parse_emissive_coefficient,
+            parse_specular_exponent,
+            parse_disolve,
+            parse_transparency,
+            parse_transmission_factor,
+            parse_sharpness,
+            parse_index_of_refraction,
+        )),
+        alt((
+            parse_illumination_model,
+            parse_texture_map_ambient,
+            parse_texture_map_diffuse,
+            parse_texture_map_specular,
+            parse_shininess_map,
+            parse_disolve_map,
+            parse_displacement_map,
+            parse_decal,
+            parse_bump_map,
+            parse_reflection_map,
+            parse_anti_alias_map,
+        )),
     )))(input)
     {
         Ok((_, x)) => x,
@@ -591,6 +603,13 @@ fn parse_specular(input: &[Token]) -> IResult<&[Token], MaterialElement> {
     )(input)
 }
 
+fn parse_emissive_coefficient(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+    preceded(
+        token_match!(Token::EmissiveCoefficient),
+        map(parse_color_type, MaterialElement::EmissiveCoefficient),
+    )(input)
+}
+
 fn parse_specular_exponent(input: &[Token]) -> IResult<&[Token], MaterialElement> {
     preceded(
         token_match!(Token::SpecularExponent),
@@ -644,7 +663,7 @@ fn parse_disolve(input: &[Token]) -> IResult<&[Token], MaterialElement> {
 fn parse_transparency(input: &[Token]) -> IResult<&[Token], MaterialElement> {
     preceded(
         token_match!(Token::Transparancy),
-        map(token_match!(Token::Float(_)), |f| {
+        map(token_match!(Token::Float(_) | Token::Int(_)), |f| {
             let f = match get_token_float(&f) {
                 Ok(s) => s,
                 Err(e) => {
@@ -667,7 +686,7 @@ fn parse_transmission_factor(input: &[Token]) -> IResult<&[Token], MaterialEleme
 fn parse_sharpness(input: &[Token]) -> IResult<&[Token], MaterialElement> {
     preceded(
         token_match!(Token::Sharpness),
-        map(token_match!(Token::Float(_)), |f| {
+        map(token_match!(Token::Float(_) | Token::Int(_)), |f| {
             let f = match get_token_float(&f) {
                 Ok(s) => s,
                 Err(e) => {
@@ -683,7 +702,7 @@ fn parse_sharpness(input: &[Token]) -> IResult<&[Token], MaterialElement> {
 fn parse_index_of_refraction(input: &[Token]) -> IResult<&[Token], MaterialElement> {
     preceded(
         token_match!(Token::IndexOfRefraction),
-        map(token_match!(Token::Float(_)), |f| {
+        map(token_match!(Token::Float(_) | Token::Int(_)), |f| {
             let f = match get_token_float(&f) {
                 Ok(s) => s,
                 Err(e) => {
@@ -876,7 +895,7 @@ fn parse_option_bm(input: &[Token]) -> IResult<&[Token], OptionElement> {
     map(
         preceded(
             token_match!(Token::OptionBumpMultiplier),
-            token_match!(Token::Float(_)),
+            token_match!(Token::Float(_) | Token::Int(_)),
         ),
         |s| {
             let val = match get_token_float(&s) {
@@ -933,7 +952,10 @@ fn parse_option_texture_range(input: &[Token]) -> IResult<&[Token], OptionElemen
     map(
         preceded(
             token_match!(Token::OptionRange),
-            tuple((token_match!(Token::Float(_)), token_match!(Token::Float(_)))),
+            tuple((
+                token_match!(Token::Float(_) | Token::Int(_)),
+                token_match!(Token::Float(_) | Token::Int(_)),
+            )),
         ),
         |(base, gain)| {
             let base = match get_token_float(&base) {
@@ -960,9 +982,9 @@ fn parse_option_offset(input: &[Token]) -> IResult<&[Token], OptionElement> {
         preceded(
             token_match!(Token::OptionOffset),
             tuple((
-                token_match!(Token::Float(_)),
-                opt(token_match!(Token::Float(_))),
-                opt(token_match!(Token::Float(_))),
+                token_match!(Token::Float(_) | Token::Int(_)),
+                opt(token_match!(Token::Float(_) | Token::Int(_))),
+                opt(token_match!(Token::Float(_) | Token::Int(_))),
             )),
         ),
         |(x, y, z)| {
@@ -997,9 +1019,9 @@ fn parse_option_scale(input: &[Token]) -> IResult<&[Token], OptionElement> {
         preceded(
             token_match!(Token::OptionScale),
             tuple((
-                token_match!(Token::Float(_)),
-                opt(token_match!(Token::Float(_))),
-                opt(token_match!(Token::Float(_))),
+                token_match!(Token::Float(_) | Token::Int(_)),
+                opt(token_match!(Token::Float(_) | Token::Int(_))),
+                opt(token_match!(Token::Float(_) | Token::Int(_))),
             )),
         ),
         |(x, y, z)| {
@@ -1034,9 +1056,9 @@ fn parse_option_turbulance(input: &[Token]) -> IResult<&[Token], OptionElement> 
         preceded(
             token_match!(Token::OptionTurbulence),
             tuple((
-                token_match!(Token::Float(_)),
-                opt(token_match!(Token::Float(_))),
-                opt(token_match!(Token::Float(_))),
+                token_match!(Token::Float(_) | Token::Int(_)),
+                opt(token_match!(Token::Float(_) | Token::Int(_))),
+                opt(token_match!(Token::Float(_) | Token::Int(_))),
             )),
         ),
         |(x, y, z)| {
