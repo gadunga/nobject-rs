@@ -41,6 +41,7 @@ pub fn parse_mtl(input: &str) -> Result<Vec<Token>, TokenizeError> {
                         keyword_rule!("map_aat", AntiAliasMap),
                     )),
                     alt((
+                        keyword_rule!("map_disp", DisplacementMap),
                         keyword_rule!("disp", DisplacementMap),
                         keyword_rule!("decal", Decal),
                         keyword_rule!("bump", BumpMap),
