@@ -1,17 +1,9 @@
 use crate::{
     material::{
-        BumpMap,
-        ColorCorrectedMap,
-        ColorType,
-        DisolveType,
-        Material,
-        NonColorCorrectedMap,
+        BumpMap, ColorCorrectedMap, ColorType, DisolveType, Material, NonColorCorrectedMap,
         ReflectionMap,
     },
-    tokenizer::{
-        parse_mtl,
-        Token,
-    },
+    tokenizer::{parse_mtl, Token},
 };
 
 #[test]
@@ -413,7 +405,7 @@ parse_material_test!(
         }),
         bump_map: Some(BumpMap {
             bump_multiplier: Some(2.0),
-            map_settings:    Some(NonColorCorrectedMap {
+            map_settings: Some(NonColorCorrectedMap {
                 file_name: "leath.mpb".into(),
                 ..Default::default()
             }),
@@ -473,7 +465,7 @@ parse_material_test!(
         illumination_mode: Some(1),
         reflection_map: Some(ReflectionMap {
             reflection_type: "sphere".into(),
-            map_settings:    Some(ColorCorrectedMap {
+            map_settings: Some(ColorCorrectedMap {
                 file_name: "chrome.rla".into(),
                 ..Default::default()
             }),

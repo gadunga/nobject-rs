@@ -1,7 +1,6 @@
-use crate::model::ModelElement;
 use crate::{
     model,
-    model::{Face, FaceElement, Vertex},
+    model::{Face, FaceElement, ModelElement, Vertex},
     tokenizer::{parse_obj, Token},
     Line, LineElement, Point, Texture,
 };
