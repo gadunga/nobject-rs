@@ -1,9 +1,17 @@
 use crate::{
     material::{
-        BumpMap, ColorCorrectedMap, ColorType, DisolveType, Material, NonColorCorrectedMap,
+        BumpMap,
+        ColorCorrectedMap,
+        ColorType,
+        DisolveType,
+        Material,
+        NonColorCorrectedMap,
         ReflectionMap,
     },
-    tokenizer::{parse_mtl, Token},
+    tokenizer::{
+        parse_mtl,
+        Token,
+    },
 };
 
 #[test]
@@ -405,7 +413,7 @@ parse_material_test!(
         }),
         bump_map: Some(BumpMap {
             bump_multiplier: Some(2.0),
-            map_settings: Some(NonColorCorrectedMap {
+            map_settings:    Some(NonColorCorrectedMap {
                 file_name: "leath.mpb".into(),
                 ..Default::default()
             }),
@@ -465,7 +473,7 @@ parse_material_test!(
         illumination_mode: Some(1),
         reflection_map: Some(ReflectionMap {
             reflection_type: "sphere".into(),
-            map_settings: Some(ColorCorrectedMap {
+            map_settings:    Some(ColorCorrectedMap {
                 file_name: "chrome.rla".into(),
                 ..Default::default()
             }),
@@ -510,6 +518,44 @@ parse_material_test!(
                 file_name: "Bump_2K.png".into(),
                 ..Default::default()
             }),
+            ..Default::default()
+        }),
+        illumination_mode: Some(2),
+        ..Default::default()
+    }
+);
+
+parse_material_test!(
+    sponza_mat_test,
+    "newmtl Material__25
+    Ns 7.843137
+    Ka 0.000000 0.000000 0.000000
+    Kd 0.470400 0.470400 0.470400
+    Ks 0.000000 0.000000 0.000000
+    Ni 1.000000
+    d 0.000000
+    illum 2
+    map_Kd textures/lion.tga
+    map_Disp textures/lion_ddn.tga
+    map_Ka textures/lion.tga",
+    Material {
+        name: "Material__25".into(),
+        ambient: Some(ColorType::Rgb(0.0, 0.0, 0.0)),
+        diffuse: Some(ColorType::Rgb(0.470400, 0.470400, 0.470400)),
+        specular: Some(ColorType::Rgb(0.0, 0.0, 0.0)),
+        specular_exponent: Some(7.843137),
+        index_of_refraction: Some(1.0),
+        disolve: Some(DisolveType::Alpha(0.0)),
+        texture_map_diffuse: Some(ColorCorrectedMap {
+            file_name: "textures/lion.tga".into(),
+            ..Default::default()
+        }),
+        texture_map_ambient: Some(ColorCorrectedMap {
+            file_name: "textures/lion.tga".into(),
+            ..Default::default()
+        }),
+        displacement_map: Some(NonColorCorrectedMap {
+            file_name: "textures/lion_ddn.tga".into(),
             ..Default::default()
         }),
         illumination_mode: Some(2),
