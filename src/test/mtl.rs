@@ -554,3 +554,22 @@ parse_material_test!(
         ..Default::default()
     }
 );
+
+parse_material_test!(
+    neon_green_with_comments,
+    "newmtl neon_green
+    #
+    # some comment
+    #
+Kd 0.0000 1.0000 0.0000
+# 
+# Some other comment
+#
+illum 0",
+    Material {
+        name: "neon_green".to_string(),
+        diffuse: Some(ColorType::Rgb(0.0, 1.0, 0.0)),
+        illumination_mode: Some(0),
+        ..Default::default()
+    }
+);
