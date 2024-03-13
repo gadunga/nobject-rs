@@ -235,7 +235,7 @@ pub(crate) fn parse(input: &[Token]) -> Result<Model, ModelError> {
             parse_texture_map,
             parse_group,
         )),
-        Model::default(),
+        Model::default,
         |mut model: Model, item: ModelElement| {
             match item {
                 ModelElement::Vertex(x) => model.vertices.push(x),
@@ -247,52 +247,52 @@ pub(crate) fn parse(input: &[Token]) -> Result<Model, ModelError> {
                         let set = model.faces.entry(g.clone()).or_insert_with(Vec::new);
                         set.push(f.clone());
                     }
-                }
+                },
                 ModelElement::Line(l) => {
                     for g in &model.current_group {
                         let set = model.lines.entry(g.clone()).or_insert_with(Vec::new);
                         set.push(l.clone());
                     }
-                }
+                },
                 ModelElement::Point(p) => {
                     for g in &model.current_group {
                         let set = model.points.entry(g.clone()).or_insert_with(Vec::new);
                         set.push(p.clone());
                     }
-                }
+                },
                 ModelElement::Group(groups) => {
                     model.current_group.clear();
                     for g in groups {
                         model.groups.insert(g.clone(), Default::default());
                         model.current_group.push(g);
                     }
-                }
+                },
                 ModelElement::MaterialLib(libs) => model.material_libs.extend(libs),
                 ModelElement::Material(name) => {
                     for g in &model.current_group {
                         let group = model.groups.entry(g.clone()).or_default();
                         group.material_name = name.clone();
                     }
-                }
-                ModelElement::ObjName(_name) => {}
+                },
+                ModelElement::ObjName(_name) => {},
                 ModelElement::Smoothing(group_id) => {
                     model.current_smoothing_group = group_id;
-                }
-                ModelElement::Bevel(_flag) => {}
-                ModelElement::CInterp(_flag) => {}
-                ModelElement::DInterp(_flag) => {}
-                ModelElement::Lod(_level) => {}
-                ModelElement::ShadowObj(_name) => {}
-                ModelElement::TraceObj(_name) => {}
+                },
+                ModelElement::Bevel(_flag) => {},
+                ModelElement::CInterp(_flag) => {},
+                ModelElement::DInterp(_flag) => {},
+                ModelElement::Lod(_level) => {},
+                ModelElement::ShadowObj(_name) => {},
+                ModelElement::TraceObj(_name) => {},
                 ModelElement::TextureLib(libs) => {
                     model.texture_libs.extend(libs);
-                }
+                },
                 ModelElement::TextureMap(name) => {
                     for g in &model.current_group {
                         let group = model.groups.entry(g.clone()).or_default();
                         group.texture_map = Some(name.clone());
                     }
-                }
+                },
             }
             model
         },
@@ -321,21 +321,21 @@ pub(crate) fn parse_vertex(input: &[Token]) -> IResult<&[Token], Vertex> {
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    }
+                    },
                 },
                 match get_token_float(&y) {
                     Ok(s) => s,
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    }
+                    },
                 },
                 match get_token_float(&z) {
                     Ok(s) => s,
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    }
+                    },
                 },
             );
             let w = w.map(|val| match get_token_float(&val) {
@@ -343,7 +343,7 @@ pub(crate) fn parse_vertex(input: &[Token]) -> IResult<&[Token], Vertex> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             });
             (x, y, z, w).into()
         },
@@ -367,21 +367,21 @@ pub(crate) fn parse_vertex_normal(input: &[Token]) -> IResult<&[Token], Normal> 
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    }
+                    },
                 },
                 match get_token_float(&y) {
                     Ok(s) => s,
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    }
+                    },
                 },
                 match get_token_float(&z) {
                     Ok(s) => s,
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    }
+                    },
                 },
             );
             (x, y, z).into()
@@ -405,21 +405,21 @@ pub(crate) fn parse_vertex_texture(input: &[Token]) -> IResult<&[Token], Texture
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             let v = v.map(|val| match get_token_float(&val) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             });
             let w = w.map(|val| match get_token_float(&val) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             });
             (u, v, w).into()
         },
@@ -448,7 +448,7 @@ pub(crate) fn parse_face(input: &[Token]) -> IResult<&[Token], Face> {
                         Err(e) => {
                             log::error!("{}", e);
                             Default::default()
-                        }
+                        },
                     };
                     let t = match t {
                         Some(t) => t.map(|tex| match get_token_int(&tex) {
@@ -456,7 +456,7 @@ pub(crate) fn parse_face(input: &[Token]) -> IResult<&[Token], Face> {
                             Err(e) => {
                                 log::error!("{}", e);
                                 Default::default()
-                            }
+                            },
                         }),
                         None => None,
                     };
@@ -467,14 +467,14 @@ pub(crate) fn parse_face(input: &[Token]) -> IResult<&[Token], Face> {
                             Err(e) => {
                                 log::error!("{}", e);
                                 Default::default()
-                            }
+                            },
                         }),
                         None => None,
                     };
                     (v, t, n).into()
                 },
             ),
-            Face::default(),
+            Face::default,
             |mut f: Face, item: FaceElement| {
                 f.elements.push(item);
                 f
@@ -501,19 +501,19 @@ pub(crate) fn parse_line(input: &[Token]) -> IResult<&[Token], Line> {
                         Err(e) => {
                             log::error!("{}", e);
                             Default::default()
-                        }
+                        },
                     };
                     let t = t.flatten().map(|tex| match get_token_int(&tex) {
                         Ok(s) => s,
                         Err(e) => {
                             log::error!("{}", e);
                             Default::default()
-                        }
+                        },
                     });
                     (v, t).into()
                 },
             ),
-            Line::default(),
+            Line::default,
             |mut f: Line, item: LineElement| {
                 f.elements.push(item);
                 f
@@ -531,9 +531,9 @@ pub(crate) fn parse_point(input: &[Token]) -> IResult<&[Token], Point> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             }),
-            Point::default(),
+            Point::default,
             |mut f: Point, item: i32| {
                 f.elements.push(item);
                 f
@@ -553,7 +553,7 @@ pub(crate) fn parse_group(input: &[Token]) -> IResult<&[Token], ModelElement> {
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    }
+                    },
                 },
             )),
         ),
@@ -572,7 +572,7 @@ pub(crate) fn parse_mat_lib(input: &[Token]) -> IResult<&[Token], ModelElement> 
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    }
+                    },
                 },
             )),
         ),
@@ -592,7 +592,7 @@ pub(crate) fn parse_material(input: &[Token]) -> IResult<&[Token], ModelElement>
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
 
             ModelElement::Material(res)
@@ -612,7 +612,7 @@ pub(crate) fn parse_obj_name(input: &[Token]) -> IResult<&[Token], ModelElement>
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             ModelElement::ObjName(res)
         },
@@ -631,7 +631,7 @@ pub(crate) fn parse_smoothing(input: &[Token]) -> IResult<&[Token], ModelElement
                         Err(e) => {
                             log::error!("{}", e);
                             Default::default()
-                        }
+                        },
                     };
                     if !val {
                         Token::Int(0)
@@ -648,7 +648,7 @@ pub(crate) fn parse_smoothing(input: &[Token]) -> IResult<&[Token], ModelElement
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             ModelElement::Smoothing(res)
         },
@@ -664,7 +664,7 @@ pub(crate) fn parse_bevel(input: &[Token]) -> IResult<&[Token], ModelElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
 
             if let Ok(flag) = res.parse::<bool>() {
@@ -685,7 +685,7 @@ pub(crate) fn parse_c_interp(input: &[Token]) -> IResult<&[Token], ModelElement>
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
 
             if let Ok(flag) = res.parse::<bool>() {
@@ -706,7 +706,7 @@ pub(crate) fn parse_d_interp(input: &[Token]) -> IResult<&[Token], ModelElement>
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
 
             if let Ok(flag) = res.parse::<bool>() {
@@ -727,7 +727,7 @@ pub(crate) fn parse_lod(input: &[Token]) -> IResult<&[Token], ModelElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             ModelElement::Lod(res)
         },
@@ -746,7 +746,7 @@ pub(crate) fn parse_shadow_obj(input: &[Token]) -> IResult<&[Token], ModelElemen
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
 
             ModelElement::ShadowObj(res)
@@ -766,7 +766,7 @@ pub(crate) fn parse_trace_obj(input: &[Token]) -> IResult<&[Token], ModelElement
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
 
             ModelElement::TraceObj(res)
@@ -784,7 +784,7 @@ pub(crate) fn parse_texture_lib(input: &[Token]) -> IResult<&[Token], ModelEleme
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    }
+                    },
                 };
 
                 res
@@ -806,7 +806,7 @@ pub(crate) fn parse_texture_map(input: &[Token]) -> IResult<&[Token], ModelEleme
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
 
             ModelElement::TextureMap(res)

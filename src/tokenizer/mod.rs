@@ -465,7 +465,7 @@ pub(self) fn parse_digit(input: &str) -> IResult<&str, Token> {
     map(
         tuple((
             opt(alt((tag("+"), tag("-")))),
-            fold_many1(digit1, Vec::new(), |mut acc: Vec<_>, item| {
+            fold_many1(digit1, Vec::new, |mut acc: Vec<_>, item| {
                 acc.push(item);
                 acc
             }),
@@ -488,12 +488,12 @@ pub(self) fn parse_float(input: &str) -> IResult<&str, Token> {
             alt((
                 map(
                     tuple((
-                        fold_many0(digit1, Vec::new(), |mut acc: Vec<_>, item| {
+                        fold_many0(digit1, Vec::new, |mut acc: Vec<_>, item| {
                             acc.push(item);
                             acc
                         }),
                         tag("."),
-                        opt(fold_many1(digit1, Vec::new(), |mut acc: Vec<_>, item| {
+                        opt(fold_many1(digit1, Vec::new, |mut acc: Vec<_>, item| {
                             acc.push(item);
                             acc
                         })),
@@ -518,12 +518,12 @@ pub(self) fn parse_float(input: &str) -> IResult<&str, Token> {
                 ),
                 map(
                     tuple((
-                        opt(fold_many1(digit1, Vec::new(), |mut acc: Vec<_>, item| {
+                        opt(fold_many1(digit1, Vec::new, |mut acc: Vec<_>, item| {
                             acc.push(item);
                             acc
                         })),
                         tag("."),
-                        fold_many1(digit1, Vec::new(), |mut acc: Vec<_>, item| {
+                        fold_many1(digit1, Vec::new, |mut acc: Vec<_>, item| {
                             acc.push(item);
                             acc
                         }),

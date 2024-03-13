@@ -72,7 +72,7 @@ pub fn parse_mtl(input: &str) -> Result<Vec<Token>, TokenizeError> {
             map(alt((line_ending, multispace1)), |_| Token::Ignore),
             map(is_not(" \r\n"), |s: &str| Token::String(s.to_string())),
         )),
-        Vec::new(),
+        Vec::new,
         |mut acc: Vec<Token>, item| {
             if item != Token::Ignore {
                 acc.push(item);

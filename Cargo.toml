@@ -1,8 +1,8 @@
 [package]
 name = "nobject-rs"
-version = "1.3.2"
+version = "2.0.0"
 authors = ["shmapdy <richard.meester@gmail.com>"]
-edition = "2018"
+edition = "2021"
 license = "MIT"
 keywords = ["gamedev", "graphics", "wavefront", "obj", "mtl"]
 categories = ["rendering::data-formats"]
@@ -14,5 +14,5 @@ description = "A parser for wavefront Obj/Mtl files. Written with Nom."
 [dependencies]
 derive_more = "0.99"
 log = "0.4"
-nom = "6.2"
+nom = "7.1.3"
 thiserror = "1.0"
