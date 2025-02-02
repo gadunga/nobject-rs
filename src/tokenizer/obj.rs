@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::result::Result;
 
 use nom::{
@@ -7,11 +8,12 @@ use nom::{
     combinator::map,
     multi::fold_many0,
     sequence::{delimited, preceded},
+    Parser,
 };
 
-use super::{Token, TokenizeError};
+use super::{Token, TokenSet, TokenizeError};
 
-pub fn parse_obj(input: &str) -> Result<Vec<Token>, TokenizeError> {
+pub fn parse_obj(input: &str) -> Result<TokenSet, TokenizeError> {
     match fold_many0(
         alt((
             delimited(
@@ -48,7 +50,7 @@ pub fn parse_obj(input: &str) -> Result<Vec<Token>, TokenizeError> {
                 |_| Token::Ignore,
             ),
             map(alt((line_ending, multispace1)), |_| Token::Ignore),
-            map(is_not("\r\n"), |s: &str| Token::String(s.to_string())),
+            map(is_not("\r\n"), |s: &str| Token::String(Cow::Borrowed(s))),
         )),
         Vec::new,
         |mut acc: Vec<Token>, item| {
@@ -57,9 +59,10 @@ pub fn parse_obj(input: &str) -> Result<Vec<Token>, TokenizeError> {
             }
             acc
         },
-    )(input)
+    )
+    .parse(input)
     {
-        Ok((_, v)) => Ok(v),
+        Ok((_, v)) => Ok(v.into()),
         Err(e) => Err(TokenizeError::Parse(e.to_string())),
     }
 }

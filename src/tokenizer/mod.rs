@@ -4,6 +4,11 @@ mod obj;
 #[cfg(test)]
 mod test;
 
+use std::borrow::Cow;
+use std::iter::Enumerate;
+use std::ops::Index;
+use std::ops::IndexMut;
+
 pub use mtl::parse_mtl;
 use nom::{
     branch::alt,
@@ -11,8 +16,7 @@ use nom::{
     character::complete::digit1,
     combinator::{map, opt},
     multi::{fold_many0, fold_many1},
-    sequence::tuple,
-    IResult,
+    IResult, Input, Parser,
 };
 pub use obj::parse_obj;
 
@@ -25,9 +29,9 @@ pub enum TokenizeError {
 }
 
 #[derive(Clone, Debug, PartialEq)]
-pub enum Token {
+pub enum Token<'a> {
     Ignore,
-    String(String),
+    String(Cow<'a, str>),
     Float(f32),
     Int(i32),
     Slash,
@@ -461,15 +465,117 @@ pub enum Token {
     OptionTextureResolution,
 }
 
-pub(self) fn parse_digit(input: &str) -> IResult<&str, Token> {
+#[derive(Debug, Clone)]
+pub struct TokenSet<'a> {
+    tokens: Vec<Token<'a>>,
+}
+
+impl TokenSet<'_> {
+    pub fn is_empty(&self) -> bool {
+        self.tokens.is_empty()
+    }
+
+    pub fn split_at(&self, index: usize) -> (Self, Self) {
+        let (a, b) = self.tokens.split_at(index);
+        (Self { tokens: a.to_vec() }, Self { tokens: b.to_vec() })
+    }
+
+    pub fn len(&self) -> usize {
+        self.tokens.len()
+    }
+}
+
+impl<'a> Index<usize> for TokenSet<'a> {
+    type Output = Token<'a>;
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.tokens[index]
+    }
+}
+
+impl IndexMut<usize> for TokenSet<'_> {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.tokens[index]
+    }
+}
+
+impl<'a> From<Vec<Token<'a>>> for TokenSet<'a> {
+    fn from(tokens: Vec<Token<'a>>) -> Self {
+        Self { tokens }
+    }
+}
+
+impl<'a> AsRef<Vec<Token<'a>>> for TokenSet<'a> {
+    fn as_ref(&self) -> &Vec<Token<'a>> {
+        &self.tokens
+    }
+}
+
+impl<'a> Iterator for TokenSet<'a> {
+    type Item = Token<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.tokens.first().cloned()
+    }
+}
+
+impl<'a> Input for TokenSet<'a> {
+    type Item = Token<'a>;
+    type Iter = TokenSet<'a>;
+    type IterIndices = Enumerate<Self::Iter>;
+
+    fn input_len(&self) -> usize {
+        self.len()
+    }
+
+    fn take(&self, index: usize) -> Self {
+        Self {
+            tokens: self.tokens.iter().take(index).cloned().collect(),
+        }
+    }
+
+    fn take_from(&self, index: usize) -> Self {
+        Self {
+            tokens: self.tokens[index..].to_vec(),
+        }
+    }
+
+    fn take_split(&self, index: usize) -> (Self, Self) {
+        self.split_at(index)
+    }
+
+    fn position<P>(&self, predicate: P) -> Option<usize>
+    where
+        P: Fn(Self::Item) -> bool,
+    {
+        self.tokens.iter().position(|t| predicate(t.clone()))
+    }
+
+    fn iter_elements(&self) -> Self::Iter {
+        self.clone()
+    }
+
+    fn iter_indices(&self) -> Self::IterIndices {
+        self.iter_elements().enumerate()
+    }
+
+    fn slice_index(&self, count: usize) -> Result<usize, nom::Needed> {
+        if self.len() >= count {
+            Ok(count)
+        } else {
+            Err(nom::Needed::new(count - self.len()))
+        }
+    }
+}
+
+fn parse_digit(input: &str) -> IResult<&str, Token> {
     map(
-        tuple((
+        (
             opt(alt((tag("+"), tag("-")))),
             fold_many1(digit1, Vec::new, |mut acc: Vec<_>, item| {
                 acc.push(item);
                 acc
             }),
-        )),
+        ),
         |(sign, s): (Option<&str>, Vec<&str>)| {
             let mut val = s.join("").parse::<i32>().unwrap_or_default();
             if sign == Some("-") {
@@ -477,17 +583,18 @@ pub(self) fn parse_digit(input: &str) -> IResult<&str, Token> {
             }
             Token::Int(val)
         },
-    )(input)
+    )
+    .parse(input)
 }
 
 #[allow(clippy::type_complexity)]
-pub(self) fn parse_float(input: &str) -> IResult<&str, Token> {
+fn parse_float(input: &str) -> IResult<&str, Token> {
     map(
-        tuple((
+        (
             opt(alt((tag("+"), tag("-")))),
             alt((
                 map(
-                    tuple((
+                    (
                         fold_many0(digit1, Vec::new, |mut acc: Vec<_>, item| {
                             acc.push(item);
                             acc
@@ -498,11 +605,11 @@ pub(self) fn parse_float(input: &str) -> IResult<&str, Token> {
                             acc
                         })),
                         opt(map(
-                            tuple((
+                            (
                                 alt((tag("e"), tag("E"))),
                                 opt(alt((tag("+"), tag("-")))),
                                 digit1,
-                            )),
+                            ),
                             |(e, sign, digits)| {
                                 let mut acc = String::new();
                                 acc.push_str(e);
@@ -513,11 +620,11 @@ pub(self) fn parse_float(input: &str) -> IResult<&str, Token> {
                                 acc
                             },
                         )),
-                    )),
+                    ),
                     |(f, _, s, e)| (f, s.unwrap_or_default(), e.unwrap_or_default()),
                 ),
                 map(
-                    tuple((
+                    (
                         opt(fold_many1(digit1, Vec::new, |mut acc: Vec<_>, item| {
                             acc.push(item);
                             acc
@@ -528,11 +635,11 @@ pub(self) fn parse_float(input: &str) -> IResult<&str, Token> {
                             acc
                         }),
                         opt(map(
-                            tuple((
+                            (
                                 alt((tag("e"), tag("E"))),
                                 opt(alt((tag("+"), tag("-")))),
                                 digit1,
-                            )),
+                            ),
                             |(e, sign, digits)| {
                                 let mut acc = String::new();
                                 acc.push_str(e);
@@ -543,11 +650,11 @@ pub(self) fn parse_float(input: &str) -> IResult<&str, Token> {
                                 acc
                             },
                         )),
-                    )),
+                    ),
                     |(f, _, s, e)| (f.unwrap_or_default(), s, e.unwrap_or_default()),
                 ),
             )),
-        )),
+        ),
         |(sign, (f, s, e)): (Option<&str>, (Vec<&str>, Vec<&str>, String))| {
             let mut acc = Vec::new();
             if !f.is_empty() {
@@ -566,5 +673,6 @@ pub(self) fn parse_float(input: &str) -> IResult<&str, Token> {
             }
             Token::Float(val)
         },
-    )(input)
+    )
+    .parse(input)
 }
