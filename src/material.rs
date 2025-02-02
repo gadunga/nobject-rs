@@ -2,14 +2,14 @@ use std::result::Result;
 
 use crate::{
     get_on_off_from_str, get_opt_token_float_opt, get_token_float, get_token_int, get_token_string,
-    tokenizer::Token,
+    tokenizer::{Token, TokenSet},
 };
 use nom::{
     branch::alt,
     combinator::{map, opt},
     multi::many1,
-    sequence::{preceded, tuple},
-    IResult,
+    sequence::preceded,
+    IResult, Parser,
 };
 use thiserror::Error;
 
@@ -88,32 +88,32 @@ impl ColorCorrectedMap {
                 OptionElement::FileName(n) => res.file_name = n.clone(),
                 OptionElement::BlendU(b) => {
                     res.blend_u = Some(*b);
-                }
+                },
                 OptionElement::BlendV(b) => {
                     res.blend_v = Some(*b);
-                }
+                },
                 OptionElement::Cc(b) => {
                     res.color_correct = Some(*b);
-                }
+                },
                 OptionElement::Clamp(b) => {
                     res.clamp = Some(*b);
-                }
+                },
                 OptionElement::TextureRange((base, gain)) => {
                     res.texture_range = Some((*base, *gain));
-                }
+                },
                 OptionElement::Offset((x, y, z)) => {
                     res.offset = Some((*x, *y, *z));
-                }
+                },
                 OptionElement::Scale((x, y, z)) => {
                     res.scale = Some((*x, *y, *z));
-                }
+                },
                 OptionElement::Turbulance((x, y, z)) => {
                     res.turbulance = Some((*x, *y, *z));
-                }
+                },
                 OptionElement::TextureRes(tex_res) => {
                     res.texture_res = Some(*tex_res);
-                }
-                _ => {}
+                },
+                _ => {},
             }
         }
         res
@@ -156,30 +156,30 @@ impl NonColorCorrectedMap {
                 OptionElement::FileName(n) => res.file_name = n.clone(),
                 OptionElement::BlendU(b) => {
                     res.blend_u = Some(*b);
-                }
+                },
                 OptionElement::BlendV(b) => {
                     res.blend_v = Some(*b);
-                }
+                },
                 OptionElement::Clamp(b) => {
                     res.clamp = Some(*b);
-                }
+                },
                 OptionElement::ImfChan(chan) => res.imf_chan = Some(chan.clone()),
                 OptionElement::TextureRange((base, gain)) => {
                     res.texture_range = Some((*base, *gain));
-                }
+                },
                 OptionElement::Offset((x, y, z)) => {
                     res.offset = Some((*x, *y, *z));
-                }
+                },
                 OptionElement::Scale((x, y, z)) => {
                     res.scale = Some((*x, *y, *z));
-                }
+                },
                 OptionElement::Turbulance((x, y, z)) => {
                     res.turbulance = Some((*x, *y, *z));
-                }
+                },
                 OptionElement::TextureRes(tex_res) => {
                     res.texture_res = Some(*tex_res);
-                }
-                _ => {}
+                },
+                _ => {},
             }
         }
         res
@@ -198,7 +198,7 @@ pub struct BumpMap {
 impl BumpMap {
     fn new(o: &[OptionElement]) -> Self {
         let mut res = Self {
-            map_settings: Some(NonColorCorrectedMap::new(&o)),
+            map_settings: Some(NonColorCorrectedMap::new(o)),
             ..Default::default()
         };
 
@@ -225,7 +225,7 @@ pub struct ReflectionMap {
 impl ReflectionMap {
     fn new(o: &[OptionElement]) -> Self {
         let mut res = Self {
-            map_settings: Some(ColorCorrectedMap::new(&o)),
+            map_settings: Some(ColorCorrectedMap::new(o)),
             ..Default::default()
         };
 
@@ -303,70 +303,70 @@ impl Material {
         match element {
             MaterialElement::Name(n) => {
                 self.name = n.clone();
-            }
+            },
             MaterialElement::Ambient(c) => {
                 self.ambient = Some(c.clone());
-            }
+            },
             MaterialElement::Diffuse(c) => {
                 self.diffuse = Some(c.clone());
-            }
+            },
             MaterialElement::Specular(c) => {
                 self.specular = Some(c.clone());
-            }
+            },
             MaterialElement::EmissiveCoefficient(c) => {
                 self.emissive_coefficient = Some(c.clone());
-            }
+            },
             MaterialElement::SpecularExponent(f) => {
                 self.specular_exponent = Some(*f);
-            }
+            },
             MaterialElement::Disolve(d) => {
                 self.disolve = Some(*d);
-            }
+            },
             MaterialElement::Transparency(f) => {
                 self.transparancy = Some(*f);
-            }
+            },
             MaterialElement::TransmissionFactor(c) => {
                 self.transmission_factor = Some(c.clone());
-            }
+            },
             MaterialElement::Sharpness(f) => {
                 self.sharpness = Some(*f);
-            }
+            },
             MaterialElement::IndexOfRefraction(f) => {
                 self.index_of_refraction = Some(*f);
-            }
+            },
             MaterialElement::IlluminationModel(u) => {
                 self.illumination_mode = Some(*u);
-            }
+            },
             MaterialElement::TexMapAmbient(cc) => {
                 self.texture_map_ambient = Some(cc.clone());
-            }
+            },
             MaterialElement::TexMapDiffuse(cc) => {
                 self.texture_map_diffuse = Some(cc.clone());
-            }
+            },
             MaterialElement::TexMapSpecular(cc) => {
                 self.texture_map_specular = Some(cc.clone());
-            }
+            },
             MaterialElement::ShininessMap(ncc) => {
                 self.shininess_map = Some(ncc.clone());
-            }
+            },
             MaterialElement::DisolveMap(ncc) => {
                 self.disolve_map = Some(ncc.clone());
-            }
+            },
             MaterialElement::DisplacementMap(ncc) => {
                 self.displacement_map = Some(ncc.clone());
-            }
+            },
             MaterialElement::Decal(ncc) => {
                 self.decal = Some(ncc.clone());
-            }
+            },
             MaterialElement::BumpMap(bm) => {
                 self.bump_map = Some(bm.clone());
-            }
+            },
             MaterialElement::ReflectionMap(rm) => {
                 self.reflection_map = Some(rm.clone());
-            }
+            },
             MaterialElement::AntiAliasMap(b) => {
                 self.anti_alias_map = Some(*b);
-            }
+            },
         }
     }
 }
@@ -411,35 +411,32 @@ enum MaterialElement {
     AntiAliasMap(bool),
 }
 
-pub(crate) fn parse(input: &[Token]) -> Result<Vec<Material>, MaterialError> {
-    let elements: Vec<MaterialElement> = match many1(alt((
-        alt((
-            parse_new_material,
-            parse_ambient,
-            parse_diffuse,
-            parse_specular,
-            parse_emissive_coefficient,
-            parse_specular_exponent,
-            parse_disolve,
-            parse_transparency,
-            parse_transmission_factor,
-            parse_sharpness,
-            parse_index_of_refraction,
-        )),
-        alt((
-            parse_illumination_model,
-            parse_texture_map_ambient,
-            parse_texture_map_diffuse,
-            parse_texture_map_specular,
-            parse_shininess_map,
-            parse_disolve_map,
-            parse_displacement_map,
-            parse_decal,
-            parse_bump_map,
-            parse_reflection_map,
-            parse_anti_alias_map,
-        )),
-    )))(input)
+pub(crate) fn parse(input: TokenSet) -> Result<Vec<Material>, MaterialError> {
+    let elements: Vec<MaterialElement> = match many1(alt([
+        parse_new_material,
+        parse_ambient,
+        parse_diffuse,
+        parse_specular,
+        parse_emissive_coefficient,
+        parse_specular_exponent,
+        parse_disolve,
+        parse_transparency,
+        parse_transmission_factor,
+        parse_sharpness,
+        parse_index_of_refraction,
+        parse_illumination_model,
+        parse_texture_map_ambient,
+        parse_texture_map_diffuse,
+        parse_texture_map_specular,
+        parse_shininess_map,
+        parse_disolve_map,
+        parse_displacement_map,
+        parse_decal,
+        parse_bump_map,
+        parse_reflection_map,
+        parse_anti_alias_map,
+    ]))
+    .parse(input)
     {
         Ok((_, x)) => x,
         Err(e) => return Err(MaterialError::Parse(e.to_string())),
@@ -461,7 +458,7 @@ pub(crate) fn parse(input: &[Token]) -> Result<Vec<Material>, MaterialError> {
     Ok(res)
 }
 
-fn parse_new_material(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_new_material(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     map(
         preceded(
             token_match!(Token::NewMaterial),
@@ -473,53 +470,54 @@ fn parse_new_material(input: &[Token]) -> IResult<&[Token], MaterialElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
-            MaterialElement::Name(name)
+            MaterialElement::Name(name.into())
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_color_type(input: &[Token]) -> IResult<&[Token], ColorType> {
+fn parse_color_type(input: TokenSet) -> IResult<TokenSet, ColorType> {
     alt((
         map(
-            tuple((
+            (
                 token_match!(Token::Spectral),
                 token_match!(Token::String(_)),
                 opt(token_match!(Token::Float(_) | Token::Int(_))),
-            )),
+            ),
             |(_, file, factor)| {
                 let file_name = match get_token_string(&file) {
                     Ok(s) => s,
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    }
+                    },
                 };
                 let factor = match get_opt_token_float_opt(&factor) {
                     Ok(s) => s.unwrap_or(1.0),
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    }
+                    },
                 };
-                ColorType::Spectral(file_name, factor)
+                ColorType::Spectral(file_name.into(), factor)
             },
         ),
         map(
-            tuple((
+            (
                 token_match!(Token::Xyz),
                 token_match!(Token::Float(_) | Token::Int(_)),
                 opt(token_match!(Token::Float(_) | Token::Int(_))),
                 opt(token_match!(Token::Float(_) | Token::Int(_))),
-            )),
+            ),
             |(_, x_token, y_token, z_token)| {
                 let x = match get_token_float(&x_token) {
                     Ok(s) => s,
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    }
+                    },
                 };
                 let y = match y_token {
                     Some(y) => match get_token_float(&y) {
@@ -527,7 +525,7 @@ fn parse_color_type(input: &[Token]) -> IResult<&[Token], ColorType> {
                         Err(e) => {
                             log::error!("{}", e);
                             Default::default()
-                        }
+                        },
                     },
                     None => x,
                 };
@@ -537,7 +535,7 @@ fn parse_color_type(input: &[Token]) -> IResult<&[Token], ColorType> {
                         Err(e) => {
                             log::error!("{}", e);
                             Default::default()
-                        }
+                        },
                     },
                     None => x,
                 };
@@ -546,11 +544,11 @@ fn parse_color_type(input: &[Token]) -> IResult<&[Token], ColorType> {
             },
         ),
         map(
-            tuple((
+            (
                 token_match!(Token::Float(_) | Token::Int(_)),
                 token_match!(Token::Float(_) | Token::Int(_)),
                 token_match!(Token::Float(_) | Token::Int(_)),
-            )),
+            ),
             |(r, g, b)| {
                 let (r, g, b) = (
                     match get_token_float(&r) {
@@ -558,59 +556,64 @@ fn parse_color_type(input: &[Token]) -> IResult<&[Token], ColorType> {
                         Err(e) => {
                             log::error!("{}", e);
                             Default::default()
-                        }
+                        },
                     },
                     match get_token_float(&g) {
                         Ok(s) => s,
                         Err(e) => {
                             log::error!("{}", e);
                             Default::default()
-                        }
+                        },
                     },
                     match get_token_float(&b) {
                         Ok(s) => s,
                         Err(e) => {
                             log::error!("{}", e);
                             Default::default()
-                        }
+                        },
                     },
                 );
 
                 ColorType::Rgb(r, g, b)
             },
         ),
-    ))(input)
+    ))
+    .parse(input)
 }
 
-fn parse_ambient(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_ambient(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::AmbientColor),
         map(parse_color_type, MaterialElement::Ambient),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_diffuse(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_diffuse(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::DiffuseColor),
         map(parse_color_type, MaterialElement::Diffuse),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_specular(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_specular(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::SpecularColor),
         map(parse_color_type, MaterialElement::Specular),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_emissive_coefficient(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_emissive_coefficient(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::EmissiveCoefficient),
         map(parse_color_type, MaterialElement::EmissiveCoefficient),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_specular_exponent(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_specular_exponent(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::SpecularExponent),
         map(token_match!(Token::Float(_) | Token::Int(_)), |f| {
@@ -619,14 +622,15 @@ fn parse_specular_exponent(input: &[Token]) -> IResult<&[Token], MaterialElement
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             MaterialElement::SpecularExponent(f)
         }),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_disolve(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_disolve(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::Disolved),
         alt((
@@ -641,7 +645,7 @@ fn parse_disolve(input: &[Token]) -> IResult<&[Token], MaterialElement> {
                         Err(e) => {
                             log::error!("{}", e);
                             Default::default()
-                        }
+                        },
                     };
                     MaterialElement::Disolve(DisolveType::Halo(f))
                 },
@@ -652,15 +656,16 @@ fn parse_disolve(input: &[Token]) -> IResult<&[Token], MaterialElement> {
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    }
+                    },
                 };
                 MaterialElement::Disolve(DisolveType::Alpha(f))
             }),
         )),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_transparency(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_transparency(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::Transparancy),
         map(token_match!(Token::Float(_) | Token::Int(_)), |f| {
@@ -669,21 +674,23 @@ fn parse_transparency(input: &[Token]) -> IResult<&[Token], MaterialElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             MaterialElement::Transparency(f)
         }),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_transmission_factor(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_transmission_factor(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::TransmissionFactor),
         map(parse_color_type, MaterialElement::TransmissionFactor),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_sharpness(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_sharpness(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::Sharpness),
         map(token_match!(Token::Float(_) | Token::Int(_)), |f| {
@@ -692,14 +699,15 @@ fn parse_sharpness(input: &[Token]) -> IResult<&[Token], MaterialElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             MaterialElement::Sharpness(f)
         }),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_index_of_refraction(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_index_of_refraction(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::IndexOfRefraction),
         map(token_match!(Token::Float(_) | Token::Int(_)), |f| {
@@ -708,14 +716,15 @@ fn parse_index_of_refraction(input: &[Token]) -> IResult<&[Token], MaterialEleme
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             MaterialElement::IndexOfRefraction(f)
         }),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_illumination_model(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_illumination_model(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::IlluminationModel),
         map(token_match!(Token::Int(_)), |f| {
@@ -724,95 +733,105 @@ fn parse_illumination_model(input: &[Token]) -> IResult<&[Token], MaterialElemen
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             MaterialElement::IlluminationModel(f as u32)
         }),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_texture_map_ambient(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_texture_map_ambient(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::TextureMapAmbient),
         map(parse_options, |o| {
             MaterialElement::TexMapAmbient(ColorCorrectedMap::new(&o))
         }),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_texture_map_diffuse(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_texture_map_diffuse(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::TextureMapDiffuse),
         map(parse_options, |o| {
             MaterialElement::TexMapDiffuse(ColorCorrectedMap::new(&o))
         }),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_texture_map_specular(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_texture_map_specular(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::TextureMapSpecular),
         map(parse_options, |o| {
             MaterialElement::TexMapSpecular(ColorCorrectedMap::new(&o))
         }),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_shininess_map(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_shininess_map(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::TextureMapShininess),
         map(parse_options, |o| {
             MaterialElement::ShininessMap(NonColorCorrectedMap::new(&o))
         }),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_disolve_map(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_disolve_map(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::TextureMapDisolved),
         map(parse_options, |o| {
             MaterialElement::DisolveMap(NonColorCorrectedMap::new(&o))
         }),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_displacement_map(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_displacement_map(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::DisplacementMap),
         map(parse_options, |o| {
             MaterialElement::DisplacementMap(NonColorCorrectedMap::new(&o))
         }),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_decal(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_decal(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::Decal),
         map(parse_options, |o| {
             MaterialElement::Decal(NonColorCorrectedMap::new(&o))
         }),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_bump_map(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_bump_map(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::BumpMap),
         map(parse_options, |o| {
             MaterialElement::BumpMap(BumpMap::new(&o))
         }),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_reflection_map(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_reflection_map(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::ReflectionMap),
         map(parse_options, |o| {
             MaterialElement::ReflectionMap(ReflectionMap::new(&o))
         }),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_anti_alias_map(input: &[Token]) -> IResult<&[Token], MaterialElement> {
+fn parse_anti_alias_map(input: TokenSet) -> IResult<TokenSet, MaterialElement> {
     preceded(
         token_match!(Token::AntiAliasMap),
         map(token_match!(Token::String(_)), |o| {
@@ -821,14 +840,15 @@ fn parse_anti_alias_map(input: &[Token]) -> IResult<&[Token], MaterialElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             MaterialElement::AntiAliasMap(val)
         }),
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_options(input: &[Token]) -> IResult<&[Token], Vec<OptionElement>> {
+fn parse_options(input: TokenSet) -> IResult<TokenSet, Vec<OptionElement>> {
     many1(alt((
         parse_option_blend,
         parse_option_bm,
@@ -847,14 +867,15 @@ fn parse_options(input: &[Token]) -> IResult<&[Token], Vec<OptionElement>> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
-            OptionElement::FileName(name)
+            OptionElement::FileName(name.into())
         }),
-    )))(input)
+    )))
+    .parse(input)
 }
 
-fn parse_option_blend(input: &[Token]) -> IResult<&[Token], OptionElement> {
+fn parse_option_blend(input: TokenSet) -> IResult<TokenSet, OptionElement> {
     alt((
         map(
             preceded(
@@ -867,7 +888,7 @@ fn parse_option_blend(input: &[Token]) -> IResult<&[Token], OptionElement> {
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    }
+                    },
                 };
                 OptionElement::BlendU(val)
             },
@@ -883,15 +904,16 @@ fn parse_option_blend(input: &[Token]) -> IResult<&[Token], OptionElement> {
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
-                    }
+                    },
                 };
                 OptionElement::BlendV(val)
             },
         ),
-    ))(input)
+    ))
+    .parse(input)
 }
 
-fn parse_option_bm(input: &[Token]) -> IResult<&[Token], OptionElement> {
+fn parse_option_bm(input: TokenSet) -> IResult<TokenSet, OptionElement> {
     map(
         preceded(
             token_match!(Token::OptionBumpMultiplier),
@@ -903,14 +925,15 @@ fn parse_option_bm(input: &[Token]) -> IResult<&[Token], OptionElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             OptionElement::BumpMultiplier(val)
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_option_cc(input: &[Token]) -> IResult<&[Token], OptionElement> {
+fn parse_option_cc(input: TokenSet) -> IResult<TokenSet, OptionElement> {
     map(
         preceded(
             token_match!(Token::OptionColorCorrect),
@@ -922,14 +945,15 @@ fn parse_option_cc(input: &[Token]) -> IResult<&[Token], OptionElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             OptionElement::Cc(val)
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_option_clamp(input: &[Token]) -> IResult<&[Token], OptionElement> {
+fn parse_option_clamp(input: TokenSet) -> IResult<TokenSet, OptionElement> {
     map(
         preceded(
             token_match!(Token::OptionClamp),
@@ -941,21 +965,22 @@ fn parse_option_clamp(input: &[Token]) -> IResult<&[Token], OptionElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             OptionElement::Clamp(val)
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_option_texture_range(input: &[Token]) -> IResult<&[Token], OptionElement> {
+fn parse_option_texture_range(input: TokenSet) -> IResult<TokenSet, OptionElement> {
     map(
         preceded(
             token_match!(Token::OptionRange),
-            tuple((
+            (
                 token_match!(Token::Float(_) | Token::Int(_)),
                 token_match!(Token::Float(_) | Token::Int(_)),
-            )),
+            ),
         ),
         |(base, gain)| {
             let base = match get_token_float(&base) {
@@ -963,29 +988,30 @@ fn parse_option_texture_range(input: &[Token]) -> IResult<&[Token], OptionElemen
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             let gain = match get_token_float(&gain) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             OptionElement::TextureRange((base, gain))
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_option_offset(input: &[Token]) -> IResult<&[Token], OptionElement> {
+fn parse_option_offset(input: TokenSet) -> IResult<TokenSet, OptionElement> {
     map(
         preceded(
             token_match!(Token::OptionOffset),
-            tuple((
+            (
                 token_match!(Token::Float(_) | Token::Int(_)),
                 opt(token_match!(Token::Float(_) | Token::Int(_))),
                 opt(token_match!(Token::Float(_) | Token::Int(_))),
-            )),
+            ),
         ),
         |(x, y, z)| {
             let x = match get_token_float(&x) {
@@ -993,36 +1019,37 @@ fn parse_option_offset(input: &[Token]) -> IResult<&[Token], OptionElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             let y = match get_opt_token_float_opt(&y) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("{}", e);
                     None
-                }
+                },
             };
             let z = match get_opt_token_float_opt(&z) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("{}", e);
                     None
-                }
+                },
             };
             OptionElement::Offset((x, y, z))
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_option_scale(input: &[Token]) -> IResult<&[Token], OptionElement> {
+fn parse_option_scale(input: TokenSet) -> IResult<TokenSet, OptionElement> {
     map(
         preceded(
             token_match!(Token::OptionScale),
-            tuple((
+            (
                 token_match!(Token::Float(_) | Token::Int(_)),
                 opt(token_match!(Token::Float(_) | Token::Int(_))),
                 opt(token_match!(Token::Float(_) | Token::Int(_))),
-            )),
+            ),
         ),
         |(x, y, z)| {
             let x = match get_token_float(&x) {
@@ -1030,36 +1057,37 @@ fn parse_option_scale(input: &[Token]) -> IResult<&[Token], OptionElement> {
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             let y = match get_opt_token_float_opt(&y) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("{}", e);
                     None
-                }
+                },
             };
             let z = match get_opt_token_float_opt(&z) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("{}", e);
                     None
-                }
+                },
             };
             OptionElement::Scale((x, y, z))
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_option_turbulance(input: &[Token]) -> IResult<&[Token], OptionElement> {
+fn parse_option_turbulance(input: TokenSet) -> IResult<TokenSet, OptionElement> {
     map(
         preceded(
             token_match!(Token::OptionTurbulence),
-            tuple((
+            (
                 token_match!(Token::Float(_) | Token::Int(_)),
                 opt(token_match!(Token::Float(_) | Token::Int(_))),
                 opt(token_match!(Token::Float(_) | Token::Int(_))),
-            )),
+            ),
         ),
         |(x, y, z)| {
             let x = match get_token_float(&x) {
@@ -1067,28 +1095,29 @@ fn parse_option_turbulance(input: &[Token]) -> IResult<&[Token], OptionElement> 
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             let y = match get_opt_token_float_opt(&y) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("{}", e);
                     None
-                }
+                },
             };
             let z = match get_opt_token_float_opt(&z) {
                 Ok(s) => s,
                 Err(e) => {
                     log::error!("{}", e);
                     None
-                }
+                },
             };
             OptionElement::Turbulance((x, y, z))
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_option_texture_resolution(input: &[Token]) -> IResult<&[Token], OptionElement> {
+fn parse_option_texture_resolution(input: TokenSet) -> IResult<TokenSet, OptionElement> {
     map(
         preceded(
             token_match!(Token::OptionTextureResolution),
@@ -1100,14 +1129,15 @@ fn parse_option_texture_resolution(input: &[Token]) -> IResult<&[Token], OptionE
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
             OptionElement::TextureRes(val)
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_option_imf_channel(input: &[Token]) -> IResult<&[Token], OptionElement> {
+fn parse_option_imf_channel(input: TokenSet) -> IResult<TokenSet, OptionElement> {
     map(
         preceded(
             token_match!(Token::OptionIMFChan),
@@ -1119,14 +1149,15 @@ fn parse_option_imf_channel(input: &[Token]) -> IResult<&[Token], OptionElement>
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
-            OptionElement::ImfChan(val)
+            OptionElement::ImfChan(val.into())
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-fn parse_option_reflection_type(input: &[Token]) -> IResult<&[Token], OptionElement> {
+fn parse_option_reflection_type(input: TokenSet) -> IResult<TokenSet, OptionElement> {
     map(
         preceded(
             token_match!(Token::ReflectionType),
@@ -1138,9 +1169,10 @@ fn parse_option_reflection_type(input: &[Token]) -> IResult<&[Token], OptionElem
                 Err(e) => {
                     log::error!("{}", e);
                     Default::default()
-                }
+                },
             };
-            OptionElement::ReflectionType(val)
+            OptionElement::ReflectionType(val.into())
         },
-    )(input)
+    )
+    .parse(input)
 }

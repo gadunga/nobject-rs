@@ -92,7 +92,7 @@ fn parse_vertex_texture() {
     assert_eq!(tokens[1], Token::Float(0.500));
     assert_eq!(tokens[2], Token::Int(1));
 
-    let res = model::parse_vertex_texture(&tokens);
+    let res = model::parse_vertex_texture(tokens);
 
     assert!(res.is_ok());
     let (extra, texture) = res.ok().unwrap();
@@ -113,7 +113,7 @@ fn parse_vertex_texture2() {
     assert!(res.is_ok());
     let tokens = res.unwrap();
 
-    let res = model::parse_vertex_texture(&tokens);
+    let res = model::parse_vertex_texture(tokens);
 
     assert!(res.is_ok());
     let (extra, texture) = res.ok().unwrap();
@@ -139,7 +139,7 @@ fn parse_face() {
     assert_eq!(tokens[2], Token::Int(2));
     assert_eq!(tokens[3], Token::Int(3));
 
-    let res = model::parse_face(&tokens);
+    let res = model::parse_face(tokens);
 
     assert!(res.is_ok());
     let (extra, face) = res.ok().unwrap();
@@ -187,7 +187,7 @@ fn parse_face_1() {
     assert_eq!(tokens[8], Token::Slash);
     assert_eq!(tokens[9], Token::Int(4));
 
-    let res = model::parse_face(&tokens);
+    let res = model::parse_face(tokens);
 
     let (extra, face) = res.ok().unwrap();
     assert_eq!(extra.len(), 0);
@@ -240,7 +240,7 @@ fn parse_face_2() {
     assert_eq!(tokens[14], Token::Slash);
     assert_eq!(tokens[15], Token::Int(5));
 
-    let res = model::parse_face(&tokens);
+    let res = model::parse_face(tokens);
 
     let (extra, face) = res.ok().unwrap();
     assert_eq!(extra.len(), 0);
@@ -290,7 +290,7 @@ fn parse_face_3() {
     assert_eq!(tokens[11], Token::Slash);
     assert_eq!(tokens[12], Token::Int(4));
 
-    let res = model::parse_face(&tokens);
+    let res = model::parse_face(tokens);
 
     let (extra, face) = res.ok().unwrap();
     assert_eq!(extra.len(), 0);
@@ -328,7 +328,7 @@ fn parse_face_4() {
     assert!(res.is_ok());
     let tokens = res.unwrap();
 
-    let res = model::parse_face(&tokens);
+    let res = model::parse_face(tokens);
 
     let (extra, face) = res.ok().unwrap();
     assert_eq!(extra.len(), 0);
@@ -371,7 +371,7 @@ fn parse_face_trailing_slash() {
     assert!(res.is_ok());
     let tokens = res.unwrap();
 
-    let res = model::parse_face(&tokens);
+    let res = model::parse_face(tokens);
 
     let (extra, face) = res.ok().unwrap();
     assert_eq!(extra.len(), 0);
@@ -409,7 +409,7 @@ fn parse_face_trailing_slash_slash() {
     assert!(res.is_ok());
     let tokens = res.unwrap();
 
-    let res = model::parse_face(&tokens);
+    let res = model::parse_face(tokens);
 
     let (extra, face) = res.ok().unwrap();
     assert_eq!(extra.len(), 0);
@@ -450,7 +450,7 @@ fn parse_point() {
     assert_eq!(tokens[2], Token::Int(2));
     assert_eq!(tokens[3], Token::Int(3));
 
-    let res = model::parse_point(&tokens);
+    let res = model::parse_point(tokens);
 
     assert!(res.is_ok());
     let (extra, point) = res.ok().unwrap();
@@ -475,7 +475,7 @@ fn parse_line() {
     assert_eq!(tokens[2], Token::Int(2));
     assert_eq!(tokens[3], Token::Int(3));
 
-    let res = model::parse_line(&tokens);
+    let res = model::parse_line(tokens);
 
     assert!(res.is_ok());
     let (extra, line) = res.ok().unwrap();
@@ -507,7 +507,7 @@ fn parse_line_texture_struct() {
 
     assert!(res.is_ok());
     let tokens = res.unwrap();
-    let res = model::parse_line(&tokens);
+    let res = model::parse_line(tokens);
 
     assert!(res.is_ok());
     let (extra, line) = res.ok().unwrap();
@@ -541,7 +541,7 @@ fn parse_line_trailing_slash_struct() {
 
     assert!(res.is_ok());
     let tokens = res.unwrap();
-    let res = model::parse_line(&tokens);
+    let res = model::parse_line(tokens);
 
     assert!(res.is_ok());
     let (extra, line) = res.ok().unwrap();
@@ -574,9 +574,9 @@ fn simple_material() {
     let tokens = res.unwrap();
     assert_eq!(tokens.len(), 2);
     assert_eq!(tokens[0], Token::MaterialLib);
-    assert_eq!(tokens[1], Token::String("some_mtl_file.mtl".to_string()));
+    assert_eq!(tokens[1], Token::String("some_mtl_file.mtl".into()));
 
-    let res = model::parse_mat_lib(&tokens);
+    let res = model::parse_mat_lib(tokens);
 
     assert!(res.is_ok());
     let (extra, model) = res.ok().unwrap();
@@ -596,9 +596,9 @@ fn simple_group() {
     let tokens = res.unwrap();
     assert_eq!(tokens.len(), 2);
     assert_eq!(tokens[0], Token::Group);
-    assert_eq!(tokens[1], Token::String("some_group".to_string()));
+    assert_eq!(tokens[1], Token::String("some_group".into()));
 
-    let res = model::parse_group(&tokens);
+    let res = model::parse_group(tokens);
 
     assert!(res.is_ok());
     let (extra, model) = res.ok().unwrap();
@@ -615,9 +615,9 @@ fn simple_object() {
     let tokens = res.unwrap();
     assert_eq!(tokens.len(), 2);
     assert_eq!(tokens[0], Token::Object);
-    assert_eq!(tokens[1], Token::String("some_object".to_string()));
+    assert_eq!(tokens[1], Token::String("some_object".into()));
 
-    let res = model::parse_obj_name(&tokens);
+    let res = model::parse_obj_name(tokens);
 
     assert!(res.is_ok());
     let (extra, model) = res.ok().unwrap();

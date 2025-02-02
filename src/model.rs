@@ -3,15 +3,16 @@ use std::{collections::HashMap, result::Result};
 use derive_more::{Constructor, From, Into};
 
 use crate::{
-    get_on_off_from_str, get_token_float, get_token_int, get_token_string, tokenizer::Token,
+    get_on_off_from_str, get_token_float, get_token_int, get_token_string,
+    tokenizer::{Token, TokenSet},
 };
 
 use nom::{
     branch::alt,
     combinator::{map, opt},
     multi::{fold_many0, fold_many1, many1},
-    sequence::{preceded, tuple},
-    IResult,
+    sequence::preceded,
+    IResult, Parser,
 };
 use thiserror::Error;
 
@@ -212,7 +213,7 @@ pub(crate) enum ModelElement {
     TextureMap(String),
 }
 
-pub(crate) fn parse(input: &[Token]) -> Result<Model, ModelError> {
+pub(crate) fn parse(input: TokenSet) -> Result<Model, ModelError> {
     match fold_many0(
         alt((
             map(parse_vertex, ModelElement::Vertex),
@@ -244,19 +245,19 @@ pub(crate) fn parse(input: &[Token]) -> Result<Model, ModelError> {
                 ModelElement::Face(mut f) => {
                     f.smoothing_group = model.current_smoothing_group;
                     for g in &model.current_group {
-                        let set = model.faces.entry(g.clone()).or_insert_with(Vec::new);
+                        let set = model.faces.entry(g.clone()).or_default();
                         set.push(f.clone());
                     }
                 },
                 ModelElement::Line(l) => {
                     for g in &model.current_group {
-                        let set = model.lines.entry(g.clone()).or_insert_with(Vec::new);
+                        let set = model.lines.entry(g.clone()).or_default();
                         set.push(l.clone());
                     }
                 },
                 ModelElement::Point(p) => {
                     for g in &model.current_group {
-                        let set = model.points.entry(g.clone()).or_insert_with(Vec::new);
+                        let set = model.points.entry(g.clone()).or_default();
                         set.push(p.clone());
                     }
                 },
@@ -296,23 +297,24 @@ pub(crate) fn parse(input: &[Token]) -> Result<Model, ModelError> {
             }
             model
         },
-    )(input)
+    )
+    .parse(input)
     {
         Ok((_, acc)) => Ok(acc),
         Err(e) => Err(ModelError::Parse(e.to_string())),
     }
 }
 
-pub(crate) fn parse_vertex(input: &[Token]) -> IResult<&[Token], Vertex> {
+pub(crate) fn parse_vertex(input: TokenSet) -> IResult<TokenSet, Vertex> {
     map(
         preceded(
             token_match!(Token::Vertex),
-            tuple((
+            (
                 token_match!(Token::Float(_) | Token::Int(_)),
                 token_match!(Token::Float(_) | Token::Int(_)),
                 token_match!(Token::Float(_) | Token::Int(_)),
                 opt(token_match!(Token::Float(_) | Token::Int(_))),
-            )),
+            ),
         ),
         |(x, y, z, w)| {
             let (x, y, z) = (
@@ -347,18 +349,19 @@ pub(crate) fn parse_vertex(input: &[Token]) -> IResult<&[Token], Vertex> {
             });
             (x, y, z, w).into()
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_vertex_normal(input: &[Token]) -> IResult<&[Token], Normal> {
+pub(crate) fn parse_vertex_normal(input: TokenSet) -> IResult<TokenSet, Normal> {
     map(
         preceded(
             token_match!(Token::VertexNormal),
-            tuple((
+            (
                 token_match!(Token::Float(_) | Token::Int(_)),
                 token_match!(Token::Float(_) | Token::Int(_)),
                 token_match!(Token::Float(_) | Token::Int(_)),
-            )),
+            ),
         ),
         |(x, y, z)| {
             let (x, y, z) = (
@@ -386,18 +389,19 @@ pub(crate) fn parse_vertex_normal(input: &[Token]) -> IResult<&[Token], Normal> 
             );
             (x, y, z).into()
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_vertex_texture(input: &[Token]) -> IResult<&[Token], Texture> {
+pub(crate) fn parse_vertex_texture(input: TokenSet) -> IResult<TokenSet, Texture> {
     map(
         preceded(
             token_match!(Token::VertexTexture),
-            tuple((
+            (
                 token_match!(Token::Float(_) | Token::Int(_)),
                 opt(token_match!(Token::Float(_) | Token::Int(_))),
                 opt(token_match!(Token::Float(_) | Token::Int(_))),
-            )),
+            ),
         ),
         |(u, v, w)| {
             let u = match get_token_float(&u) {
@@ -423,15 +427,16 @@ pub(crate) fn parse_vertex_texture(input: &[Token]) -> IResult<&[Token], Texture
             });
             (u, v, w).into()
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_face(input: &[Token]) -> IResult<&[Token], Face> {
+pub(crate) fn parse_face(input: TokenSet) -> IResult<TokenSet, Face> {
     preceded(
         token_match!(Token::Face),
         fold_many1(
             map(
-                tuple((
+                (
                     token_match!(Token::Int(_)),
                     opt(preceded(
                         token_match!(Token::Slash),
@@ -441,7 +446,7 @@ pub(crate) fn parse_face(input: &[Token]) -> IResult<&[Token], Face> {
                         token_match!(Token::Slash),
                         opt(token_match!(Token::Int(_))),
                     )),
-                )),
+                ),
                 |(v, t, n)| {
                     let v = match get_token_int(&v) {
                         Ok(s) => s,
@@ -480,21 +485,22 @@ pub(crate) fn parse_face(input: &[Token]) -> IResult<&[Token], Face> {
                 f
             },
         ),
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_line(input: &[Token]) -> IResult<&[Token], Line> {
+pub(crate) fn parse_line(input: TokenSet) -> IResult<TokenSet, Line> {
     preceded(
         token_match!(Token::Line),
         fold_many1(
             map(
-                tuple((
+                (
                     token_match!(Token::Int(_)),
                     opt(preceded(
                         token_match!(Token::Slash),
                         opt(token_match!(Token::Int(_))),
                     )),
-                )),
+                ),
                 |(v, t)| {
                     let v = match get_token_int(&v) {
                         Ok(s) => s,
@@ -519,10 +525,11 @@ pub(crate) fn parse_line(input: &[Token]) -> IResult<&[Token], Line> {
                 f
             },
         ),
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_point(input: &[Token]) -> IResult<&[Token], Point> {
+pub(crate) fn parse_point(input: TokenSet) -> IResult<TokenSet, Point> {
     preceded(
         token_match!(Token::Point),
         fold_many1(
@@ -539,17 +546,18 @@ pub(crate) fn parse_point(input: &[Token]) -> IResult<&[Token], Point> {
                 f
             },
         ),
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_group(input: &[Token]) -> IResult<&[Token], ModelElement> {
+pub(crate) fn parse_group(input: TokenSet) -> IResult<TokenSet, ModelElement> {
     map(
         preceded(
             token_match!(Token::Group),
             many1(map(
                 token_match!(Token::String(_)),
                 |s| match get_token_string(&s) {
-                    Ok(s) => s,
+                    Ok(s) => s.into(),
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
@@ -558,17 +566,18 @@ pub(crate) fn parse_group(input: &[Token]) -> IResult<&[Token], ModelElement> {
             )),
         ),
         ModelElement::Group,
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_mat_lib(input: &[Token]) -> IResult<&[Token], ModelElement> {
+pub(crate) fn parse_mat_lib(input: TokenSet) -> IResult<TokenSet, ModelElement> {
     map(
         preceded(
             token_match!(Token::MaterialLib),
             many1(map(
                 token_match!(Token::String(_)),
                 |s| match get_token_string(&s) {
-                    Ok(s) => s,
+                    Ok(s) => s.into(),
                     Err(e) => {
                         log::error!("{}", e);
                         Default::default()
@@ -577,10 +586,11 @@ pub(crate) fn parse_mat_lib(input: &[Token]) -> IResult<&[Token], ModelElement> 
             )),
         ),
         ModelElement::MaterialLib,
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_material(input: &[Token]) -> IResult<&[Token], ModelElement> {
+pub(crate) fn parse_material(input: TokenSet) -> IResult<TokenSet, ModelElement> {
     map(
         preceded(
             token_match!(Token::UseMaterial),
@@ -595,12 +605,13 @@ pub(crate) fn parse_material(input: &[Token]) -> IResult<&[Token], ModelElement>
                 },
             };
 
-            ModelElement::Material(res)
+            ModelElement::Material(res.into())
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_obj_name(input: &[Token]) -> IResult<&[Token], ModelElement> {
+pub(crate) fn parse_obj_name(input: TokenSet) -> IResult<TokenSet, ModelElement> {
     map(
         preceded(
             token_match!(Token::Object),
@@ -614,12 +625,13 @@ pub(crate) fn parse_obj_name(input: &[Token]) -> IResult<&[Token], ModelElement>
                     Default::default()
                 },
             };
-            ModelElement::ObjName(res)
+            ModelElement::ObjName(res.into())
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_smoothing(input: &[Token]) -> IResult<&[Token], ModelElement> {
+pub(crate) fn parse_smoothing(input: TokenSet) -> IResult<TokenSet, ModelElement> {
     map(
         preceded(
             token_match!(Token::Smoothing),
@@ -652,10 +664,11 @@ pub(crate) fn parse_smoothing(input: &[Token]) -> IResult<&[Token], ModelElement
             };
             ModelElement::Smoothing(res)
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_bevel(input: &[Token]) -> IResult<&[Token], ModelElement> {
+pub(crate) fn parse_bevel(input: TokenSet) -> IResult<TokenSet, ModelElement> {
     map(
         preceded(token_match!(Token::Bevel), token_match!(Token::String(_))),
         |s| {
@@ -673,10 +686,11 @@ pub(crate) fn parse_bevel(input: &[Token]) -> IResult<&[Token], ModelElement> {
                 ModelElement::Bevel(false)
             }
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_c_interp(input: &[Token]) -> IResult<&[Token], ModelElement> {
+pub(crate) fn parse_c_interp(input: TokenSet) -> IResult<TokenSet, ModelElement> {
     map(
         preceded(token_match!(Token::CInterp), token_match!(Token::String(_))),
         |s| {
@@ -694,10 +708,11 @@ pub(crate) fn parse_c_interp(input: &[Token]) -> IResult<&[Token], ModelElement>
                 ModelElement::CInterp(false)
             }
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_d_interp(input: &[Token]) -> IResult<&[Token], ModelElement> {
+pub(crate) fn parse_d_interp(input: TokenSet) -> IResult<TokenSet, ModelElement> {
     map(
         preceded(token_match!(Token::DInterp), token_match!(Token::String(_))),
         |s| {
@@ -715,10 +730,11 @@ pub(crate) fn parse_d_interp(input: &[Token]) -> IResult<&[Token], ModelElement>
                 ModelElement::DInterp(false)
             }
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_lod(input: &[Token]) -> IResult<&[Token], ModelElement> {
+pub(crate) fn parse_lod(input: TokenSet) -> IResult<TokenSet, ModelElement> {
     map(
         preceded(token_match!(Token::Lod), token_match!(Token::Int(_))),
         |s| {
@@ -731,10 +747,11 @@ pub(crate) fn parse_lod(input: &[Token]) -> IResult<&[Token], ModelElement> {
             };
             ModelElement::Lod(res)
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_shadow_obj(input: &[Token]) -> IResult<&[Token], ModelElement> {
+pub(crate) fn parse_shadow_obj(input: TokenSet) -> IResult<TokenSet, ModelElement> {
     map(
         preceded(
             token_match!(Token::ShadowObj),
@@ -749,12 +766,13 @@ pub(crate) fn parse_shadow_obj(input: &[Token]) -> IResult<&[Token], ModelElemen
                 },
             };
 
-            ModelElement::ShadowObj(res)
+            ModelElement::ShadowObj(res.into())
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_trace_obj(input: &[Token]) -> IResult<&[Token], ModelElement> {
+pub(crate) fn parse_trace_obj(input: TokenSet) -> IResult<TokenSet, ModelElement> {
     map(
         preceded(
             token_match!(Token::TraceObj),
@@ -769,12 +787,13 @@ pub(crate) fn parse_trace_obj(input: &[Token]) -> IResult<&[Token], ModelElement
                 },
             };
 
-            ModelElement::TraceObj(res)
+            ModelElement::TraceObj(res.into())
         },
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_texture_lib(input: &[Token]) -> IResult<&[Token], ModelElement> {
+pub(crate) fn parse_texture_lib(input: TokenSet) -> IResult<TokenSet, ModelElement> {
     map(
         preceded(
             token_match!(Token::TextureMapLib),
@@ -787,14 +806,15 @@ pub(crate) fn parse_texture_lib(input: &[Token]) -> IResult<&[Token], ModelEleme
                     },
                 };
 
-                res
+                res.into()
             })),
         ),
         ModelElement::TextureLib,
-    )(input)
+    )
+    .parse(input)
 }
 
-pub(crate) fn parse_texture_map(input: &[Token]) -> IResult<&[Token], ModelElement> {
+pub(crate) fn parse_texture_map(input: TokenSet) -> IResult<TokenSet, ModelElement> {
     map(
         preceded(
             token_match!(Token::UseTextureMap),
@@ -809,7 +829,8 @@ pub(crate) fn parse_texture_map(input: &[Token]) -> IResult<&[Token], ModelEleme
                 },
             };
 
-            ModelElement::TextureMap(res)
+            ModelElement::TextureMap(res.into())
         },
-    )(input)
+    )
+    .parse(input)
 }

@@ -88,6 +88,7 @@ mod tokenizer;
 mod material;
 mod model;
 
+use std::borrow::Cow;
 use std::result::Result;
 
 pub use model::{
@@ -121,8 +122,8 @@ pub enum ObjError {
     MaterialParse(#[from] MaterialError),
 
     /// An unexpected token was encountered in the token stream.
-    #[error("Unexpected token encountered: `{0:#?}`")]
-    UnexpectedToken(Token),
+    #[error("Unexpected token encountered: `{0}`")]
+    UnexpectedToken(String),
 
     /// The specification for obj/mtl files has some settings
     /// either being "on" or "off". If there is an issue
@@ -141,7 +142,7 @@ pub enum ObjError {
 /// or a constructed `Model`.
 pub fn load_obj(input: &str) -> Result<Model, ObjError> {
     match tokenizer::parse_obj(input) {
-        Ok(tokens) => Ok(model::parse(&tokens)?),
+        Ok(tokens) => Ok(model::parse(tokens)?),
         Err(e) => Err(e.into()),
     }
 }
@@ -156,7 +157,7 @@ pub fn load_obj(input: &str) -> Result<Model, ObjError> {
 /// or a collection of `Material`.
 pub fn load_mtl(input: &str) -> Result<Vec<Material>, ObjError> {
     match tokenizer::parse_mtl(input) {
-        Ok(tokens) => Ok(material::parse(&tokens)?),
+        Ok(tokens) => Ok(material::parse(tokens)?),
         Err(e) => Err(e.into()),
     }
 }
@@ -167,7 +168,7 @@ fn get_token_float(token: &Token) -> Result<f32, ObjError> {
     } else if let Token::Int(i) = token {
         Ok(*i as f32)
     } else {
-        Err(ObjError::UnexpectedToken(token.clone()))
+        Err(ObjError::UnexpectedToken(format!("{:#?}", token)))
     }
 }
 
@@ -178,7 +179,7 @@ fn get_opt_token_float_opt(token: &Option<Token>) -> Result<Option<f32>, ObjErro
         } else if let Token::Int(i) = t {
             Ok(Some(*i as f32))
         } else {
-            Err(ObjError::UnexpectedToken(t.clone()))
+            Err(ObjError::UnexpectedToken(format!("{:#?}", token)))
         }
     } else {
         Ok(None)
@@ -189,27 +190,29 @@ fn get_token_int(token: &Token) -> Result<i32, ObjError> {
     if let Token::Int(i) = token {
         Ok(*i)
     } else {
-        Err(ObjError::UnexpectedToken(token.clone()))
+        Err(ObjError::UnexpectedToken(format!("{:#?}", token)))
     }
 }
 
-fn get_token_string(token: &Token) -> Result<String, ObjError> {
+fn get_token_string<'a>(token: &'a Token) -> Result<Cow<'a, str>, ObjError> {
     if let Token::String(s) = token {
         Ok(s.clone())
     } else if let Token::Int(i) = token {
-        Ok(i.to_string())
+        Ok(Cow::Owned(i.to_string()))
     } else if let Token::Float(f) = token {
-        Ok(f.to_string())
+        Ok(Cow::Owned(f.to_string()))
     } else {
-        Err(ObjError::UnexpectedToken(token.clone()))
+        Err(ObjError::UnexpectedToken(format!("{:#?}", token)))
     }
 }
 
 fn get_on_off_from_str(token: &Token) -> Result<bool, ObjError> {
-    let s = get_token_string(&token)?;
-    match s.as_str() {
-        "on" => Ok(true),
-        "off" => Ok(false),
-        _ => Err(ObjError::InvalidOnOffValue(s.clone())),
+    let s = get_token_string(token)?;
+    if s.eq_ignore_ascii_case("on") {
+        Ok(true)
+    } else if s.eq_ignore_ascii_case("off") {
+        Ok(false)
+    } else {
+        Err(ObjError::UnexpectedToken(format!("{:#?}", token)))
     }
 }
