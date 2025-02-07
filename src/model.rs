@@ -10,6 +10,7 @@ use crate::{
 use nom::{
     branch::alt,
     combinator::{map, opt},
+    error,
     multi::{fold_many0, fold_many1, many1},
     sequence::preceded,
     IResult, Parser,
@@ -216,25 +217,25 @@ pub(crate) enum ModelElement {
 pub(crate) fn parse(input: TokenSet) -> Result<Model, ModelError> {
     match fold_many0(
         alt((
-            map(parse_vertex, ModelElement::Vertex),
-            map(parse_vertex_normal, ModelElement::Normal),
-            map(parse_vertex_texture, ModelElement::Texture),
-            map(parse_face, ModelElement::Face),
-            map(parse_line, ModelElement::Line),
-            map(parse_point, ModelElement::Point),
-            parse_mat_lib,
-            parse_material,
-            parse_obj_name,
-            parse_smoothing,
-            parse_bevel,
-            parse_c_interp,
-            parse_d_interp,
-            parse_lod,
-            parse_shadow_obj,
-            parse_trace_obj,
-            parse_texture_lib,
-            parse_texture_map,
-            parse_group,
+            map(parse_vertex(), ModelElement::Vertex),
+            map(parse_vertex_normal(), ModelElement::Normal),
+            map(parse_vertex_texture(), ModelElement::Texture),
+            map(parse_face(), ModelElement::Face),
+            map(parse_line(), ModelElement::Line),
+            map(parse_point(), ModelElement::Point),
+            parse_mat_lib(),
+            parse_material(),
+            parse_obj_name(),
+            parse_smoothing(),
+            parse_bevel(),
+            parse_c_interp(),
+            parse_d_interp(),
+            parse_lod(),
+            parse_shadow_obj(),
+            parse_trace_obj(),
+            parse_texture_lib(),
+            parse_texture_map(),
+            parse_group(),
         )),
         Model::default,
         |mut model: Model, item: ModelElement| {
@@ -298,14 +299,15 @@ pub(crate) fn parse(input: TokenSet) -> Result<Model, ModelError> {
             model
         },
     )
-    .parse(input)
+    .parse_complete(input)
     {
         Ok((_, acc)) => Ok(acc),
         Err(e) => Err(ModelError::Parse(e.to_string())),
     }
 }
 
-pub(crate) fn parse_vertex(input: TokenSet) -> IResult<TokenSet, Vertex> {
+pub(crate) fn parse_vertex<'a>(
+) -> impl Parser<TokenSet<'a>, Output = Vertex, Error = error::Error<TokenSet<'a>>> {
     map(
         preceded(
             token_match!(Token::Vertex),
@@ -350,10 +352,10 @@ pub(crate) fn parse_vertex(input: TokenSet) -> IResult<TokenSet, Vertex> {
             (x, y, z, w).into()
         },
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_vertex_normal(input: TokenSet) -> IResult<TokenSet, Normal> {
+pub(crate) fn parse_vertex_normal<'a>(
+) -> impl Parser<TokenSet<'a>, Output = Normal, Error = error::Error<TokenSet<'a>>> {
     map(
         preceded(
             token_match!(Token::VertexNormal),
@@ -390,10 +392,10 @@ pub(crate) fn parse_vertex_normal(input: TokenSet) -> IResult<TokenSet, Normal> 
             (x, y, z).into()
         },
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_vertex_texture(input: TokenSet) -> IResult<TokenSet, Texture> {
+pub(crate) fn parse_vertex_texture<'a>(
+) -> impl Parser<TokenSet<'a>, Output = Texture, Error = error::Error<TokenSet<'a>>> {
     map(
         preceded(
             token_match!(Token::VertexTexture),
@@ -428,10 +430,10 @@ pub(crate) fn parse_vertex_texture(input: TokenSet) -> IResult<TokenSet, Texture
             (u, v, w).into()
         },
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_face(input: TokenSet) -> IResult<TokenSet, Face> {
+pub(crate) fn parse_face<'a>(
+) -> impl Parser<TokenSet<'a>, Output = Face, Error = error::Error<TokenSet<'a>>> {
     preceded(
         token_match!(Token::Face),
         fold_many1(
@@ -486,10 +488,10 @@ pub(crate) fn parse_face(input: TokenSet) -> IResult<TokenSet, Face> {
             },
         ),
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_line(input: TokenSet) -> IResult<TokenSet, Line> {
+pub(crate) fn parse_line<'a>(
+) -> impl Parser<TokenSet<'a>, Output = Line, Error = error::Error<TokenSet<'a>>> {
     preceded(
         token_match!(Token::Line),
         fold_many1(
@@ -526,10 +528,10 @@ pub(crate) fn parse_line(input: TokenSet) -> IResult<TokenSet, Line> {
             },
         ),
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_point(input: TokenSet) -> IResult<TokenSet, Point> {
+pub(crate) fn parse_point<'a>(
+) -> impl Parser<TokenSet<'a>, Output = Point, Error = error::Error<TokenSet<'a>>> {
     preceded(
         token_match!(Token::Point),
         fold_many1(
@@ -547,10 +549,10 @@ pub(crate) fn parse_point(input: TokenSet) -> IResult<TokenSet, Point> {
             },
         ),
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_group(input: TokenSet) -> IResult<TokenSet, ModelElement> {
+pub(crate) fn parse_group<'a>(
+) -> impl Parser<TokenSet<'a>, Output = ModelElement, Error = error::Error<TokenSet<'a>>> {
     map(
         preceded(
             token_match!(Token::Group),
@@ -567,10 +569,10 @@ pub(crate) fn parse_group(input: TokenSet) -> IResult<TokenSet, ModelElement> {
         ),
         ModelElement::Group,
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_mat_lib(input: TokenSet) -> IResult<TokenSet, ModelElement> {
+pub(crate) fn parse_mat_lib<'a>(
+) -> impl Parser<TokenSet<'a>, Output = ModelElement, Error = error::Error<TokenSet<'a>>> {
     map(
         preceded(
             token_match!(Token::MaterialLib),
@@ -587,10 +589,10 @@ pub(crate) fn parse_mat_lib(input: TokenSet) -> IResult<TokenSet, ModelElement> 
         ),
         ModelElement::MaterialLib,
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_material(input: TokenSet) -> IResult<TokenSet, ModelElement> {
+pub(crate) fn parse_material<'a>(
+) -> impl Parser<TokenSet<'a>, Output = ModelElement, Error = error::Error<TokenSet<'a>>> {
     map(
         preceded(
             token_match!(Token::UseMaterial),
@@ -608,10 +610,10 @@ pub(crate) fn parse_material(input: TokenSet) -> IResult<TokenSet, ModelElement>
             ModelElement::Material(res.into())
         },
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_obj_name(input: TokenSet) -> IResult<TokenSet, ModelElement> {
+pub(crate) fn parse_obj_name<'a>(
+) -> impl Parser<TokenSet<'a>, Output = ModelElement, Error = error::Error<TokenSet<'a>>> {
     map(
         preceded(
             token_match!(Token::Object),
@@ -628,10 +630,10 @@ pub(crate) fn parse_obj_name(input: TokenSet) -> IResult<TokenSet, ModelElement>
             ModelElement::ObjName(res.into())
         },
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_smoothing(input: TokenSet) -> IResult<TokenSet, ModelElement> {
+pub(crate) fn parse_smoothing<'a>(
+) -> impl Parser<TokenSet<'a>, Output = ModelElement, Error = error::Error<TokenSet<'a>>> {
     map(
         preceded(
             token_match!(Token::Smoothing),
@@ -665,10 +667,10 @@ pub(crate) fn parse_smoothing(input: TokenSet) -> IResult<TokenSet, ModelElement
             ModelElement::Smoothing(res)
         },
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_bevel(input: TokenSet) -> IResult<TokenSet, ModelElement> {
+pub(crate) fn parse_bevel<'a>(
+) -> impl Parser<TokenSet<'a>, Output = ModelElement, Error = error::Error<TokenSet<'a>>> {
     map(
         preceded(token_match!(Token::Bevel), token_match!(Token::String(_))),
         |s| {
@@ -687,10 +689,10 @@ pub(crate) fn parse_bevel(input: TokenSet) -> IResult<TokenSet, ModelElement> {
             }
         },
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_c_interp(input: TokenSet) -> IResult<TokenSet, ModelElement> {
+pub(crate) fn parse_c_interp<'a>(
+) -> impl Parser<TokenSet<'a>, Output = ModelElement, Error = error::Error<TokenSet<'a>>> {
     map(
         preceded(token_match!(Token::CInterp), token_match!(Token::String(_))),
         |s| {
@@ -709,10 +711,10 @@ pub(crate) fn parse_c_interp(input: TokenSet) -> IResult<TokenSet, ModelElement>
             }
         },
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_d_interp(input: TokenSet) -> IResult<TokenSet, ModelElement> {
+pub(crate) fn parse_d_interp<'a>(
+) -> impl Parser<TokenSet<'a>, Output = ModelElement, Error = error::Error<TokenSet<'a>>> {
     map(
         preceded(token_match!(Token::DInterp), token_match!(Token::String(_))),
         |s| {
@@ -731,10 +733,10 @@ pub(crate) fn parse_d_interp(input: TokenSet) -> IResult<TokenSet, ModelElement>
             }
         },
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_lod(input: TokenSet) -> IResult<TokenSet, ModelElement> {
+pub(crate) fn parse_lod<'a>(
+) -> impl Parser<TokenSet<'a>, Output = ModelElement, Error = error::Error<TokenSet<'a>>> {
     map(
         preceded(token_match!(Token::Lod), token_match!(Token::Int(_))),
         |s| {
@@ -748,10 +750,10 @@ pub(crate) fn parse_lod(input: TokenSet) -> IResult<TokenSet, ModelElement> {
             ModelElement::Lod(res)
         },
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_shadow_obj(input: TokenSet) -> IResult<TokenSet, ModelElement> {
+pub(crate) fn parse_shadow_obj<'a>(
+) -> impl Parser<TokenSet<'a>, Output = ModelElement, Error = error::Error<TokenSet<'a>>> {
     map(
         preceded(
             token_match!(Token::ShadowObj),
@@ -769,10 +771,10 @@ pub(crate) fn parse_shadow_obj(input: TokenSet) -> IResult<TokenSet, ModelElemen
             ModelElement::ShadowObj(res.into())
         },
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_trace_obj(input: TokenSet) -> IResult<TokenSet, ModelElement> {
+pub(crate) fn parse_trace_obj<'a>(
+) -> impl Parser<TokenSet<'a>, Output = ModelElement, Error = error::Error<TokenSet<'a>>> {
     map(
         preceded(
             token_match!(Token::TraceObj),
@@ -790,10 +792,10 @@ pub(crate) fn parse_trace_obj(input: TokenSet) -> IResult<TokenSet, ModelElement
             ModelElement::TraceObj(res.into())
         },
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_texture_lib(input: TokenSet) -> IResult<TokenSet, ModelElement> {
+pub(crate) fn parse_texture_lib<'a>(
+) -> impl Parser<TokenSet<'a>, Output = ModelElement, Error = error::Error<TokenSet<'a>>> {
     map(
         preceded(
             token_match!(Token::TextureMapLib),
@@ -811,10 +813,10 @@ pub(crate) fn parse_texture_lib(input: TokenSet) -> IResult<TokenSet, ModelEleme
         ),
         ModelElement::TextureLib,
     )
-    .parse(input)
 }
 
-pub(crate) fn parse_texture_map(input: TokenSet) -> IResult<TokenSet, ModelElement> {
+pub(crate) fn parse_texture_map<'a>(
+) -> impl Parser<TokenSet<'a>, Output = ModelElement, Error = error::Error<TokenSet<'a>>> {
     map(
         preceded(
             token_match!(Token::UseTextureMap),
@@ -832,5 +834,4 @@ pub(crate) fn parse_texture_map(input: TokenSet) -> IResult<TokenSet, ModelEleme
             ModelElement::TextureMap(res.into())
         },
     )
-    .parse(input)
 }

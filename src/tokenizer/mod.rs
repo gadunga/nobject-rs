@@ -15,8 +15,9 @@ use nom::{
     bytes::complete::tag,
     character::complete::digit1,
     combinator::{map, opt},
+    error::Error,
     multi::{fold_many0, fold_many1},
-    IResult, Input, Parser,
+    Input, Parser,
 };
 pub use obj::parse_obj;
 
@@ -567,7 +568,7 @@ impl<'a> Input for TokenSet<'a> {
     }
 }
 
-fn parse_digit(input: &str) -> IResult<&str, Token> {
+fn parse_digit<'a>() -> impl Parser<&'a str, Output = Token<'a>, Error = Error<&'a str>> {
     map(
         (
             opt(alt((tag("+"), tag("-")))),
@@ -584,11 +585,10 @@ fn parse_digit(input: &str) -> IResult<&str, Token> {
             Token::Int(val)
         },
     )
-    .parse(input)
 }
 
 #[allow(clippy::type_complexity)]
-fn parse_float(input: &str) -> IResult<&str, Token> {
+fn parse_float<'a>() -> impl Parser<&'a str, Output = Token<'a>, Error = Error<&'a str>> {
     map(
         (
             opt(alt((tag("+"), tag("-")))),
@@ -674,5 +674,4 @@ fn parse_float(input: &str) -> IResult<&str, Token> {
             Token::Float(val)
         },
     )
-    .parse(input)
 }

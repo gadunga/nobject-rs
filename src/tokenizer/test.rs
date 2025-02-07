@@ -1,12 +1,13 @@
 use super::{parse_digit, parse_float};
 use crate::tokenizer::Token;
+use nom::Parser;
 
 macro_rules! parse_digit_test {
     ($name:ident, $val:expr, $exp:expr) => {
         #[test]
         fn $name() {
             let val = $val;
-            let res = parse_digit(val);
+            let res = parse_digit().parse(val);
             assert!(res.is_ok());
             let (_, token) = res.unwrap();
             assert_eq!(token, $exp);
@@ -19,7 +20,7 @@ macro_rules! parse_float_test {
         #[test]
         fn $name() {
             let val = $val;
-            let res = parse_float(val);
+            let res = parse_float().parse(val);
             assert!(res.is_ok());
             let (_, token) = res.unwrap();
             assert_eq!(token, $exp);
