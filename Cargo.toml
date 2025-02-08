@@ -1,6 +1,6 @@
 [package]
 name = "nobject-rs"
-version = "3.0.0"
+version = "3.0.1"
 authors = ["shmapdy <richard.meester@gmail.com>"]
 edition = "2021"
 license = "MIT"
