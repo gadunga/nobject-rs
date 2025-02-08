@@ -22,9 +22,3 @@ macro_rules! token_match {
         inner()
     }};
 }
-
-macro_rules! keyword_rule {
-    ($name:expr, $token:ident) => {
-        map(tag_no_case($name), |_| Token::$token)
-    };
-}
